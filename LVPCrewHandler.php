@@ -773,7 +773,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         {
                 $db = LVPDatabase :: getInstance ();
                 $pResult = $db -> query (
-                        'SELECT u.user_id, u.username, u.level, u.is_developer, s.hidden_crew
+                        'SELECT u.user_id, u.username, u.level, u.is_developer
                         FROM lvp_mainserver.users u
                         LEFT JOIN lvp_website.users_links l ON l.samp_id = u.user_id
                         LEFT JOIN lvp_website.website_settings s ON s.user_id = l.user_id
@@ -807,8 +807,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         $aCrewMembers [strtolower ($aRow ['username'])] = array
                         (
                                 'ProfileID'     => $aRow ['user_id'],
-                                'Nickname'      => $aRow ['username'],
-                                'Hidden'        => (bool) $aRow ['hidden_crew']
+                                'Nickname'      => $aRow ['username']
                         );
                 }
                 
