@@ -176,7 +176,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                                 'Nowani', 'Noweni', 'Nowini', 'Nowoni', 'Nowuni',
                                 'Nawani', 'Nawoni'
                         ),
-                        array('sa-mp.nl', 'gtanet-37ag2t.sa-mp.nl')
+                        array('sa-mp.nl', 'gtanet-37ag2t.sa-mp.nl', 'gtanet-hqt.8ca.192.82.IP')
                 );
                 
                 $aLvpChannels = array
