@@ -173,7 +173,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 $this->setNuwaniInfo(
                         array(
                                 'Nuwani', 'Nuweni', 'Nuwini', 'Nuwoni', 'Nuwuni',
-                                'Nowani', 'Noweni', 'Nowini', 'Nowoni', 'Nowuni'
+                                'Nowani', 'Noweni', 'Nowini', 'Nowoni', 'Nowuni',
+                                'Nawani', 'Nawoni'
                         ),
                         array('sa-mp.nl', 'gtanet-37ag2t.sa-mp.nl')
                 );
