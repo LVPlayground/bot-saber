@@ -398,8 +398,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         return ;
                 }
                 
-                if (in_array ($pBot -> In -> User -> Username, $this -> m_aNuwaniInfo ['Username']) &&
-                    in_array ($pBot -> In -> User -> Hostname, $this -> m_aNuwaniInfo ['Hostname']))
+                if (in_array ($pBot -> In -> User -> Hostname, $this -> m_aNuwaniInfo ['Hostname']))
                 {
                         if (strtolower ($sChannel) == LVP :: ECHO_CHANNEL)
                         {
