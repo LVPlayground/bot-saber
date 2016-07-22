@@ -498,7 +498,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         case 'players':         case 'Players':         { return $this -> m_pPlayerManager;     }
                         case 'trac':            case 'Trac':            { return $this -> m_pTrac;              }
                         case 'welcomemsg':      case 'WelcomeMessage':  { return $this -> m_pWelcomeMessage;    }
-                        case 'radio':           case 'Radio':           { return $this -> m_pMessageParser;     }
+                        case 'radio':           case 'Radio':           { return $this -> m_pRadioHandler;      }
                 }
 
                 return false;

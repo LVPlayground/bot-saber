@@ -89,7 +89,7 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     public function processChannelMessage ($sMessage)
     {
         return;
-        
+
         $this -> checkForDjDetails ($sMessage, ' is off --> Coming up: ');
         $this -> checkForDjDetails ($sMessage, '[LVP Radio] Current DJ: ');
     }
