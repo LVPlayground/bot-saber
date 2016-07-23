@@ -143,11 +143,12 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
         private $m_pWelcomeMessage;
 
         /**
-         * An old feature of the previous bot were personalized welcome messages
-         * when one joined and logged in to the server. This was moderately
-         * populair, so I'm bringing it back.
+         * Lego previously, together with serials, handled the stopautodj-command so a player could
+         * take it over. Since the disassembly this is moved to Saber since it didn't fit into
+         * Nuwani either due to not being part of the gamemode. Besides this it also keeps track of
+         * the voiced or higher users in the configured channel.
          *
-         * @var LVPLVPRadioHandler
+         * @var LVPRadioHandler
          */
         private $m_pRadioHandler;
 
@@ -458,6 +459,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         case 'players':         { return $this -> m_pPlayerManager;     }
                         case 'trac':            { return $this -> m_pTrac;              }
                         case 'welcomemsg':      { return $this -> m_pWelcomeMessage;    }
+                        case 'radio':           { return $this -> m_pRadioHandler;      }
                 }
 
                 return false;

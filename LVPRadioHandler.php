@@ -9,27 +9,27 @@
 class LVPRadioHandler extends LVPEchoHandlerClass
 {
     /**
-     * We totally don't know if it is running or not at the start-up.
+     * Keeps track of the autodj is currently running.
      *
-     * @var null
+     * @var bool
      */
-    private $m_isAutoDjRunning = null;
+    private $m_isAutoDjRunning = true;
 
     /**
-     * We totally don't know who is dj'ing when starting up.
+     * In all cases, we would like to know who is now DJing. Whether be it the autodj or a player.
      *
-     * @var null
+     * @var string
      */
-    private $m_currentDjName = null;
+    private $m_currentDjName = 'LVP_Radio';
 
     /**
-     *
+     * The command players use to let the autodj stop running.
      */
-    private const STOPAUTODJ_COMMAND_TRIGGER = '!stopautodj';
+    const STOPAUTODJ_COMMAND_TRIGGER = '!stopautodj';
 
     /**
      * The constructor will call the parent constructor. Besides that it initiates the command we
-     * are going to need and it set a off-value for the current (auto)dj-state.
+     * are going to need so players can go to dj.
      *
      * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
       */
@@ -37,7 +37,7 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     {
         parent:: __construct ($pEchoHandler);
 
-        //$this->registerCommands ();
+        $this -> registerCommands ();
     }
 
     /**
@@ -46,7 +46,7 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      */
     private function registerCommands ()
     {
-        $this -> m_pModule ['Commands'] -> register (new LVPCommand (self::STOPAUTODJ_COMMAND_TRIGGER, LVP::LEVEL_NONE, array ($this, 'handleCommands')));
+        $this -> m_pModule ['Commands'] -> register (new LVPCommand (self::STOPAUTODJ_COMMAND_TRIGGER, LVP::LEVEL_NONE, array ($this, 'handleStopAutoDj')));
     }
 
     /**
@@ -65,8 +65,8 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     {
         return;
 
-        if ($nMode == LVPCommand::MODE_IRC
-            && $sTrigger == self::STOPAUTODJ_COMMAND_TRIGGER
+        if ($sTrigger == self::STOPAUTODJ_COMMAND_TRIGGER
+            && $nMode == LVPCommand::MODE_IRC
             && strtolower ($sChannel) == '#lvp.radio')
         {
             if ($this -> m_isAutoDjRunning == true)
@@ -84,27 +84,44 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     }
 
     /**
-     * @param $sMessage
+     * Called from Module.php when the user's hostname matches the hostname of LVP_Radio. We want to
+     * check the message for who is DJing.
+     *
+     * @param string $sMessage The line written the channel to look up who is DJin, if present.
      */
     public function processChannelMessage ($sMessage)
     {
         return;
 
-        $this -> checkForDjDetails ($sMessage, ' is off --> Coming up: ');
-        $this -> checkForDjDetails ($sMessage, '[LVP Radio] Current DJ: ');
+        if (!$this -> didCheckForDjDetailsWithResult ($sMessage, ' is off --> Coming up: '))
+        {
+            if (!$this -> didCheckForDjDetailsWithResult ($sMessage, '[LVP Radio] Current DJ: '))
+            {
+                $this -> didCheckForDjDetailsWithResult ($sMessage, 'The current DJ is: ', false);
+            }
+        }
     }
 
     /**
-     * @param $sMessage
-     * @param $searchString
+     * We need to check for the line for a few specific given words who is DJing. Here we process
+     * the given line with strpos and substr to determine if it is a correct line and if it matches
+     * who is DJing.
+     *
+     * @param      $sMessage
+     * @param      $searchString
+     * @param bool $omitLastCharacter
+     *
+     * @return bool Whether there is a match or not.
      */
-    private function checkForDjDetails ($sMessage, $searchString)
+    private function didCheckForDjDetailsWithResult ($sMessage, $searchString, $omitLastCharacter = true)
     {
-        $messageStartPosition = strpos ($sMessage, $searchString);
-        if ($messageStartPosition !== false)
+        $startMessageLength = strpos ($sMessage, $searchString);
+        if ($startMessageLength !== false)
         {
-            $this -> m_currentDjName = substr ($sMessage, $messageStartPosition + strlen($searchString), -1);
+            $this -> m_currentDjName = substr ($sMessage, $startMessageLength + strlen($searchString), $omitLastCharacter ? -1 : 0);
             $this -> m_isAutoDjRunning = $this -> m_currentDjName == 'LVP_Radio';
+            return true;
         }
+        return false;
     }
 }
