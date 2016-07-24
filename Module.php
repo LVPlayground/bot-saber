@@ -360,9 +360,12 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
         }
 
         /**
-         * The onChannelJoin callback will check if this bot has just joined
-         * the LVP crew channel. If so, we will initiate a crew update, so we
-         * can report any errors immediately.
+         * The onChannelJoin callback will check if this bot has just joined a specific LVP
+         * channel. If so, we will execute some specific commands to make sure the handler is up
+         * to date.
+         *
+         * For #LVP.Crew it executes the !updatecrew-cmd to have !ingamecrew up to date
+         * For #LVP.Radio it executes the !dj-cmd publicly to know the current dj
          *
          * @param Bot $pBot The bot that joined the channel.
          * @param string $sChannel The channel that was joined.
@@ -376,11 +379,12 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 }
 
                 if (strtolower ($sChannel) != LVP :: CREW_CHANNEL)
-                {
-                        return ;
-                }
+                        $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, '!updatecrew');
 
-                $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, '!updatecrew');
+                $radioChannelName = $this ['Radio'] -> getLvpRadioChannelName ();
+                if (strtolower ($sChannel) != $radioChannelName)
+                        $pBot -> send ('PRIVMSG ' . $radioChannelName . ' :!dj');
+
         }
 
         /**
@@ -391,6 +395,9 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * After that, the message is checked for commands. These are LVP
          * specific commands, so we also check whether they are executed in the
          * right channel.
+         *
+         * In the case the message is not from Nuwani but from the radiobot, we send the message to
+         * the radiohandler to handle it over there.
          *
          * @param Bot $pBot The bot that received the message.
          * @param string $sChannel The channel we received this message in.
@@ -428,13 +435,59 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                                 // We'll "fall through" to the command handler automatically.
                         }
                 }
-                else if ($pBot -> In -> User -> Hostname == 'gtanet-k5eumq.q9b4.45gs.1af8.2001.IP')
+                else if (strtolower ($sNickname) == $this ['Radio'] -> getRadioBotName ())
                 {
                         // Let the RadioHandler process this message
                         $this ['Radio'] -> processChannelMessage ($sMessage);
                 }
 
                 $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, $sMessage);
+        }
+
+        /**
+         * Received when someone privately messages the bot. We get a message from the radiobot
+         * when someone with the correct rights executed the !stopautodj-command.
+         *
+         * @param Bot    $bot Object of the bot who received it
+         * @param string $nickname Nickname of the user who send the message privately
+         * @param string $message Message which we received from the user
+         */
+        public function onPrivmsg (Bot $bot, string $nickname, string $message)
+        {
+                if ($bot ['Network'] != LVP :: NETWORK)
+                {
+                        // Other network than where LVP is, so we'll bail out.
+                        return;
+                }
+
+                if (strtolower ($nickname) == $this ['Radio'] -> getRadioBotName())
+                {
+                        // Let the RadioHandler process this private message
+                        $this ['Radio'] -> processPrivateMessage ($message);
+                }
+        }
+
+        /**
+         * Received when the bot joins a channel or when the bot itself send this command, the last
+         * one is done by the RadioHandler when the !stopautodj-command is executed.
+         *
+         * @param Bot    $bot Object of the bot who received it
+         * @param string $channel Name of the channel where names are received from
+         * @param string $names Space-seperated string of userrights and the username
+         */
+        public function onChannelNames (Bot $bot, string $channel, string $names)
+        {
+                if ($bot ['Network'] != LVP :: NETWORK)
+                {
+                        // Other network than where LVP is, so we'll bail out.
+                        return;
+                }
+
+                if ($channel == $this ['Radio'] -> getLvpRadioChannelName ())
+                {
+                        // Let the RadioHandler check the names
+                        $this ['Radio'] -> handleNamesChecking (explode (' ', $names));
+                }
         }
 
         /**
