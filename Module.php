@@ -382,8 +382,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         // Not an LVP channel either.
                         return;
                 }
-                else if (strtolower ($sNickname) == LVPRadioHandler::RADIO_BOT_NAME &&
-                        strtolower($sChannel) == LVP::RADIO_CHANNEL) {
+                else if (strtolower($sChannel) == LVP::RADIO_CHANNEL) {
                         // Let the RadioHandler process this message
                         $this['Radio']->processChannelMessage($sNickname, $sMessage);
                         return;
