@@ -144,13 +144,12 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
         /**
          * The constructor will prepare the module for immediate use.
          */
-        public function __construct ()
-        {
-                if (!class_exists ('LVP'))
-                {
+        public function __construct() {
+                if (!class_exists('LVP')) {
+                        // Third party
                         require 'Sources/Vendor/geoipcity.php';
                         require 'Sources/Vendor/QuerySAMPServer.php';
-
+                        // Our own stuff
                         require 'LVP.php';
                         require 'LVPDatabase.php';
                         require 'LVPEchoHandlerClass.php';
@@ -164,9 +163,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         require 'LVPRadioHandler.php';
                 }
 
-                if (!is_dir ('Data/LVP'))
-                {
-                        mkdir ('Data/LVP', 0777);
+                if (!is_dir('Data/LVP')) {
+                        mkdir('Data/LVP', 0777);
                 }
 
                 $this->setNuwaniInfo(
@@ -178,12 +176,11 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         array('sa-mp.nl', 'gtanet-37ag2t.sa-mp.nl', 'gtanet-hqt.8ca.192.82.IP')
                 );
 
-                $aLvpChannels = array
-                (
+                $aLvpChannels = array(
                         '#LVP'                  => LVP :: LEVEL_NONE,
                         '#LVP.Beta'             => LVP :: LEVEL_NONE,
                         '#LVP.Beta.echo'        => LVP :: LEVEL_NONE,
-                        '#LVP.crew'             => LVP :: LEVEL_MODERATOR,
+                        '#LVP.crew'             => LVP :: LEVEL_ADMINISTRATOR,
                         '#LVP.Dev'              => LVP :: LEVEL_DEVELOPER,
                         '#LVP.echo'             => LVP :: LEVEL_NONE,
                         '#LVP.Managers'         => LVP :: LEVEL_MANAGEMENT,
@@ -194,36 +191,32 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         '#Bot'                  => LVP :: LEVEL_MANAGEMENT
                 );
 
-                foreach ($aLvpChannels as $sChannel => $nLevel)
-                {
-                        $this -> addLvpChannel ($nLevel, $sChannel);
+                foreach ($aLvpChannels as $sChannel => $nLevel) {
+                        $this->addLvpChannel($nLevel, $sChannel);
                 }
 
-                $aCrewColors = array
-                (
-                        LVP :: LEVEL_MANAGEMENT         => '03',
-                        LVP :: LEVEL_ADMINISTRATOR      => '04',
-                        LVP :: LEVEL_MODERATOR          => '07',
-                        LVP :: LEVEL_DEVELOPER          => '12'
+                $aCrewColors = array(
+                        LVP :: LEVEL_MANAGEMENT => '03',
+                        LVP :: LEVEL_ADMINISTRATOR => '04',
+                        LVP :: LEVEL_DEVELOPER => '12'
                 );
 
-                $this -> m_nDatabaseTimerId = Timer :: create
-                (
-                        array (LVPDatabase :: getInstance (), 'ping'),
+                $this -> m_nDatabaseTimerId = Timer::create(
+                        array (LVPDatabase::getInstance(), 'ping'),
                         30000,
                         Timer :: INTERVAL
                 );
 
-                $this -> m_pCommandHandler      = new LVPCommandHandler         ($this);
-                $this -> m_pConfiguration       = new LVPConfiguration          ($this);
-                $this -> m_pCrewHandler         = new LVPCrewHandler            ($this, $aCrewColors);
-                $this -> m_pMessageParser       = new LVPEchoMessageParser      ($this);
-                $this -> m_pIpManager           = new LVPIpManager              ($this);
-                $this -> m_pPlayerManager       = new LVPPlayerManager          ($this);
-                $this -> m_pWelcomeMessage      = new LVPWelcomeMessage         ($this);
-                $this -> m_pRadioHandler        = new LVPRadioHandler           ($this);
+                $this->m_pCommandHandler = new LVPCommandHandler($this);
+                $this->m_pConfiguration = new LVPConfiguration($this);
+                $this->m_pCrewHandler = new LVPCrewHandler($this, $aCrewColors);
+                $this->m_pMessageParser = new LVPEchoMessageParser($this);
+                $this->m_pIpManager = new LVPIpManager($this);
+                $this->m_pPlayerManager = new LVPPlayerManager($this);
+                $this->m_pWelcomeMessage = new LVPWelcomeMessage($this);
+                $this->m_pRadioHandler = new LVPRadioHandler($this);
 
-                $this -> registerCommands ();
+                $this->registerCommands ();
         }
 
         /**
@@ -231,49 +224,38 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * other classes. Most commands will probably make use of the anonymous
          * functions in PHP.
          */
-        public function registerCommands ()
-        {
-                $this -> cmds -> register (new LVPCommand
-                (
+        public function registerCommands() {
+                $this->cmds->register(new LVPCommand(
                         '!ses',
-                        LVP :: LEVEL_MODERATOR,
-                        function ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
-                        {
-                                if ($sParams == null || !is_numeric ($aParams [0]))
-                                {
+                        LVP::LEVEL_ADMINISTRATOR,
+                        function ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+                                if ($sParams == null || !is_numeric($aParams[0])) {
                                         echo $sTrigger . ' ID';
-                                        return LVPCommand :: OUTPUT_USAGE;
+                                        return LVPCommand::OUTPUT_USAGE;
                                 }
 
-                                $pPlayer = $pModule ['Players'] -> getPlayer ($aParams [0]);
-                                if ($pPlayer == null)
-                                {
+                                $pPlayer = $pModule['Players']->getPlayer($aParams[0]);
+                                if ($pPlayer == null) {
                                         echo 'ID not found.';
-                                        return LVPCommand :: OUTPUT_ERROR;
+                                        return LVPCommand::OUTPUT_ERROR;
                                 }
 
-                                if ($nMode == LVPCommand :: MODE_IRC)
-                                {
-                                        echo ModuleBase :: COLOUR_TEAL . '* Session length of "' .
-                                                $pPlayer ['Nickname'] . '"' . ModuleBase :: CLEAR . ': ';
+                                if ($nMode == LVPCommand::MODE_IRC) {
+                                        echo ModuleBase::COLOUR_TEAL . '* Session length of "' .
+                                                $pPlayer ['Nickname'] . '"' . ModuleBase::CLEAR . ': ';
                                 }
 
-                                echo Func :: formatTime (time () - $pPlayer ['JoinTime']);
+                                echo Func::formatTime(time() - $pPlayer['JoinTime']);
                         }
                 ));
 
-                $this -> cmds -> register (new LVPCommand
-                (
+                $this->cmds->register(new LVPCommand(
                         '!syncplayers',
-                        LVP :: LEVEL_MODERATOR,
-                        function ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
-                        {
-                                if ($pModule -> players -> syncPlayers ())
-                                {
+                        LVP::LEVEL_ADMINISTRATOR,
+                        function ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+                                if ($pModule->players->syncPlayers()) {
                                         echo ModuleBase::COLOUR_DARKGREEN . '* Succeeded.';
-                                }
-                                else
-                                {
+                                } else {
                                         echo ModuleBase::COLOUR_RED . '* Failed.';
                                 }
                         }

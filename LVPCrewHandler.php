@@ -33,16 +33,9 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         private $m_aAdministrator;
         
         /**
-         * The moderators will be stored in this property.
-         * 
-         * @var array
-         */
-        private $m_aModerator;
-        
-        /**
-         * Although very little used as most developers get moderator rights or
-         * are moderators to begin with, those who don't have mod rights yet are
-         * stored in here.
+         * Although very little used as most developers get administrator rights
+         * or are administrators to begin with, those who don't have
+         * administrator rights yet are stored in here.
          * 
          * @var array
          */
@@ -138,7 +131,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 $aCommands = array
                 (
                         '!ingamecrew' => LVP :: LEVEL_NONE,
-                        '!updatecrew' => LVP :: LEVEL_MODERATOR
+                        '!updatecrew' => LVP :: LEVEL_ADMINISTRATOR
                 );
                 
                 foreach ($aCommands as $sTrigger => $nLevel)
@@ -198,11 +191,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                                 return LVP :: LEVEL_NONE;
                         }
                         
-                        case 'Moderator':
-                        {
-                                return LVP :: LEVEL_MODERATOR;
-                        }
-                        
                         case 'Administrator':
                         {
                                 return LVP :: LEVEL_ADMINISTRATOR;
@@ -255,7 +243,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 {
                         case LVP :: LEVEL_MANAGEMENT:    { $sReturn = 'Management';    break; }
                         case LVP :: LEVEL_ADMINISTRATOR: { $sReturn = 'Administrator'; break; }
-                        case LVP :: LEVEL_MODERATOR:     { $sReturn = 'Moderator';     break; }
                         case LVP :: LEVEL_DEVELOPER:     { $sReturn = 'Developer';     break; }
                 }
                 
@@ -279,7 +266,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 (
                         LVP :: LEVEL_MANAGEMENT,
                         LVP :: LEVEL_ADMINISTRATOR,
-                        LVP :: LEVEL_MODERATOR,
                         LVP :: LEVEL_DEVELOPER,
                 );
                 
@@ -309,7 +295,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 {
                         case LVP :: LEVEL_MANAGEMENT:    { $aCrew = & $this -> m_aManagement;     break; }
                         case LVP :: LEVEL_ADMINISTRATOR: { $aCrew = & $this -> m_aAdministrator;  break; }
-                        case LVP :: LEVEL_MODERATOR:     { $aCrew = & $this -> m_aModerator;      break; }
                         case LVP :: LEVEL_DEVELOPER:     { $aCrew = & $this -> m_aDeveloper;      break; }
                 }
                 
@@ -345,7 +330,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         {
                 return $this -> checkLevel ($sNickname, LVP :: LEVEL_MANAGEMENT)     ||
                        $this -> checkLevel ($sNickname, LVP :: LEVEL_ADMINISTRATOR)  ||
-                       $this -> checkLevel ($sNickname, LVP :: LEVEL_MODERATOR)      ||
                        $this -> checkLevel ($sNickname, LVP :: LEVEL_DEVELOPER);
         }
         
@@ -377,29 +361,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         
         /**
          * This method cleans all the references of someone being either
-         * /modlogin'ed or a temp mod. If the second parameter is set to true,
-         * and they didn't have temporary rights or /modlogin, a message will
-         * be sent to the crew channel indicating that the given nickname has
-         * lost their rights.
-         * 
-         * @param string $sNickname The nickname of the person who's now without mod rights.
-         * @param boolean $bFromCommand Whether it was the result of a command or just quiting.
-         */
-        public function removeMod ($sNickname, $bFromCommand = false)
-        {
-                $bRemoved  = false;
-                $bRemoved |= $this -> removeModLogin ($sNickname, $bFromCommand);
-                $bRemoved |= $this -> removeTempMod ($sNickname, $bFromCommand);
-                
-                if ($bFromCommand)
-                {
-                        $sNickname = $this -> wrapLevelColorName ($sNickname);
-                        $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sNickname . ' is no longer a moderator.');
-                }
-        }
-        
-        /**
-         * This method cleans all the references of someone being either
          * /modlogin'ed or a temp admin. If the second parameter is set to true,
          * and they didn't have temporary rights or /modlogin, a message will
          * be sent to the crew channel indicating that the given nickname has
@@ -422,8 +383,8 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         }
         
         /**
-         * This method will register a name as being ingame as an administrator
-         * or moderator rights.
+         * This method will register a name as being ingame with administrator
+         * rights.
          * 
          * @param string $sFakeName The name under which the crew member is currently ingame.
          * @param string $sRealName The name we all know the crew member under.
@@ -524,7 +485,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sTempModName);
                 if ($pPlayer != null)
                 {
-                        $pPlayer ['TempLevel'] = LVP :: LEVEL_MODERATOR;
+                        $pPlayer ['TempLevel'] = LVP :: LEVEL_ADMINISTRATOR;
                 }
         }
         
@@ -629,28 +590,8 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          */
         private function handleIngameCrew ($nLevel)
         {
-                if ($nLevel >= LVP :: LEVEL_MODERATOR)
+                if ($nLevel >= LVP::LEVEL_ADMINISTRATOR)
                 {
-                        /*$aTempMod = array ();
-                        $aTempAdmin = array ();
-                        
-                        foreach ($this -> m_pModule -> players as $pPlayer)
-                        {
-                                if ($pPlayer ['TempLevel'] > LVP :: LEVEL_NONE && in_array ($pPlayer ['Nickname'], $this -> m_aModLogin))
-                                {
-                                        
-                                }
-                                
-                                if ($pPlayer ['TempLevel'] == LVP :: LEVEL_MODERATOR)
-                                {
-                                        $aTempMod [] = $pPlayer;
-                                }
-                                else if ($pPlayer ['TempLevel'] == LVP :: LEVEL_ADMINISTRATOR)
-                                {
-                                        $aTempAdmin [] = $pPlayer;
-                                }
-                        }*/
-                        
                         // Temporary crew.
                         echo ModuleBase :: COLOUR_TEAL . '* Temp mods' . ModuleBase :: CLEAR . ': ';
                         if (count ($this -> m_aTempMod) == 0)
@@ -686,37 +627,10 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 }
                 
                 // Permanent crew.
-                /*try
-                {
-                        $pQuery   = new QuerySAMPServer (LVP :: GAMESERVER_IP, LVP :: GAMESERVER_PORT, 0, 500000);
-                        $aPlayers = $pQuery -> getDetailedPlayers ();
-                        $nPlayers = count ($aPlayers);
-                        
-                        if ($nPlayers == 0)
-                        {
-                                // Sure?
-                                $aPlayers = $pQuery -> getDetailedPlayers ();
-                                $nPlayers = count ($aPlayers);
-                        }
-                }
-                catch (QueryServerException $pException)
-                {
-                        echo $pException -> getMessage ();
-                        return LVPCommand :: OUTPUT_ERROR;
-                }
-                
-                foreach ($aPlayers as $aPlayerInfo)
-                {
-                        if ($this -> isPermanentCrew ($aPlayerInfo ['Nickname']))
-                        {
-                                $aIngameCrew [$aPlayerInfo ['Nickname']] = $aPlayerInfo ['PlayerID'];
-                        }
-                }*/
-                
                 $aIngameCrew = array ();
                 foreach ($this -> m_pModule -> players as $pPlayer)
                 {
-                        if ($pPlayer ['Level'] >= LVP :: LEVEL_MODERATOR)
+                        if ($pPlayer ['Level'] >= LVP::LEVEL_ADMINISTRATOR)
                         {
                                 $aIngameCrew [] = $pPlayer;
                         }
@@ -727,15 +641,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 {
                         echo 'No crew ingame with ' . $nPlayers . ' player' .
                                 ($nPlayers == 1 ? '' : 's') . ' ingame.';
-                        
-                        /*if ($nPlayers > 0)
-                        {
-                                return LVPCommand :: OUTPUT_NOTICE;
-                        }
-                        else
-                        {
-                                return LVPCommand :: OUTPUT_INFO;
-                        }*/
                 }
                 else
                 {
@@ -764,13 +669,10 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * This method updates the internal array with all the crew members.
          * After a successful update, an array with the number of members of
          * each rank is returned.
-         * 
-         * @throws Exception When there is a problem with the feed with crew members.
          */
-        public function handleUpdateCrew ()
-        {
-                $db = LVPDatabase :: getInstance ();
-                $pResult = $db -> query (
+        public function handleUpdateCrew() {
+                $db = LVPDatabase::getInstance();
+                $pResult = $db->query(
                         'SELECT u.user_id, u.username, u.level, u.is_developer
                         FROM lvp_mainserver.users u
                         LEFT JOIN lvp_website.users_links l ON l.samp_id = u.user_id
@@ -778,53 +680,53 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         WHERE u.level != "Player" OR u.is_developer <> 0
                         ORDER BY u.level DESC, u.username ASC');
                 
-                if ($pResult === false || $pResult -> num_rows == 0)
-                {
+                if ($pResult === false || $pResult -> num_rows == 0) {
                         echo 'Could not fetch crew information from database.';
-                        return LVPCommand :: OUTPUT_ERROR;
+                        return LVPCommand::OUTPUT_ERROR;
                 }
                 
-                $this -> m_aManagement    = array ();
-                $this -> m_aAdministrator = array ();
-                $this -> m_aModerator     = array ();
-                $this -> m_aDeveloper     = array ();
+                $this->m_aManagement = array();
+                $this->m_aAdministrator = array();
+                $this->m_aDeveloper = array();
                 
-                while ($aRow = $pResult -> fetch_assoc ())
-                {
-                        $aRow ['level'] = self :: translateGamemodeLevel ($aRow ['level'], $aRow['is_developer']);
+                while ($aRow = $pResult -> fetch_assoc()) {
+                        $aRow['level'] = self::translateGamemodeLevel($aRow['level'], $aRow['is_developer']);
                         
-                        switch ($aRow ['level'])
-                        {
-                                case LVP :: LEVEL_MANAGEMENT:    { $aCrewMembers = & $this -> m_aManagement;    break; }
-                                case LVP :: LEVEL_ADMINISTRATOR: { $aCrewMembers = & $this -> m_aAdministrator; break; }
-                                case LVP :: LEVEL_MODERATOR:     { $aCrewMembers = & $this -> m_aModerator;     break; }
-                                case LVP :: LEVEL_DEVELOPER:     { $aCrewMembers = & $this -> m_aDeveloper;     break; }
-                                default: { continue; }
+                        switch ($aRow['level']) {
+                                case LVP::LEVEL_MANAGEMENT:
+                                        $aCrewMembers = &$this->m_aManagement;
+                                        break;
+
+                                case LVP::LEVEL_ADMINISTRATOR:
+                                        $aCrewMembers = &$this->m_aAdministrator;
+                                        break;
+
+                                case LVP::LEVEL_DEVELOPER:
+                                        $aCrewMembers = &$this->m_aDeveloper;
+                                        break;
+
+                                default:
+                                        continue;
                         }
                         
-                        $aCrewMembers [strtolower ($aRow ['username'])] = array
-                        (
-                                'ProfileID'     => $aRow ['user_id'],
-                                'Nickname'      => $aRow ['username']
+                        $aCrewMembers[strtolower($aRow['username'])] = array(
+                                'ProfileID' => $aRow['user_id'],
+                                'Nickname' => $aRow['username']
                         );
                 }
                 
-                $aCounts = array
-                (
-                        LVP :: LEVEL_MANAGEMENT    => count ($this -> m_aManagement),
-                        LVP :: LEVEL_ADMINISTRATOR => count ($this -> m_aAdministrator),
-                        LVP :: LEVEL_MODERATOR     => count ($this -> m_aModerator),
-                        LVP :: LEVEL_DEVELOPER     => count ($this -> m_aDeveloper)
+                $aCounts = array(
+                        LVP::LEVEL_MANAGEMENT => count($this->m_aManagement),
+                        LVP::LEVEL_ADMINISTRATOR => count($this->m_aAdministrator),
+                        LVP::LEVEL_DEVELOPER => count($this->m_aDeveloper)
                 );
                 
                 $sMessage = 'Crew updated. ';
-                foreach ($aCounts as $nLevel => $nCount)
-                {
-                        $sMessage .= $nCount . ' ' . $this -> wrapLevelColor ($nLevel, $this -> getLevelName ($nLevel)) . ', ';
+                foreach ($aCounts as $nLevel => $nCount) {
+                        $sMessage .= $nCount . ' ' . $this->wrapLevelColor($nLevel, $this->getLevelName($nLevel)) . ', ';
                 }
                 
                 echo substr ($sMessage, 0, -2);
-                return LVPCommand :: OUTPUT_SUCCESS;
+                return LVPCommand::OUTPUT_SUCCESS;
         }
 }
-?>

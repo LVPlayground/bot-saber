@@ -153,8 +153,8 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
         
         /**
          * This method will be triggered when a general administrator message
-         * came along. It will look for messages such as temporary moderator or
-         * administrator rights, but also usage of /modlogin.
+         * came along. It will look for messages such as temporary administrator
+         * rights, but also usage of /modlogin.
          * 
          * @param Bot $pBot The bot which received the message.
          * @param string $sMessage The actual admin message.
@@ -177,9 +177,6 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                 }
                 else if ($aChunks [8] == '(administrator)') {
                     $nLevel = LVP :: LEVEL_ADMINISTRATOR;
-                }
-                else {
-                    $nLevel = LVP :: LEVEL_MODERATOR;
                 }
                 
                 $this -> m_pModule ['Crew'] -> addModLogin ($aChunks [1], $aChunks [7], $nLevel);

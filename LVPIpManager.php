@@ -4,8 +4,7 @@
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPIpManager extends LVPEchoHandlerClass
-{
+class LVPIpManager extends LVPEchoHandlerClass {
         
         /**
          * These constants are used to differentiate between nicknames and IPs
@@ -13,9 +12,9 @@ class LVPIpManager extends LVPEchoHandlerClass
          * 
          * @var integer
          */
-        const   TYPE_IP                 = 1;
-        const   TYPE_RANGED_IP          = 2;
-        const   TYPE_NICKNAME           = 3;
+        const TYPE_IP = 1;
+        const TYPE_RANGED_IP = 2;
+        const TYPE_NICKNAME = 3;
         
         /**
          * The constructor has been overridden so that we can register our
@@ -23,41 +22,37 @@ class LVPIpManager extends LVPEchoHandlerClass
          * 
          * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
          */
-        public function __construct (LVPEchoHandler $pModule)
-        {
-                parent :: __construct ($pModule);
+        public function __construct(LVPEchoHandler $pModule) {
+                parent::__construct($pModule);
                 
-                $this -> registerCommands ();
+                $this->registerCommands();
         }
         
         /**
          * This method will register all the commands handled by this class to
          * the LVPCommandHandler.
          */
-        public function registerCommands ()
-        {
-                $aCommands = array
-                (
-                        '!ipinfo'               => LVP :: LEVEL_MODERATOR,
-                        '!ipinfoci'             => LVP :: LEVEL_MODERATOR,
-                        '!ipinfoname'           => LVP :: LEVEL_MODERATOR,
-                        '!ipinfonameci'         => LVP :: LEVEL_MODERATOR,
+        public function registerCommands() {
+                $aCommands = array(
+                        '!ipinfo'               => LVP::LEVEL_ADMINISTRATOR,
+                        '!ipinfoci'             => LVP::LEVEL_ADMINISTRATOR,
+                        '!ipinfoname'           => LVP::LEVEL_ADMINISTRATOR,
+                        '!ipinfonameci'         => LVP::LEVEL_ADMINISTRATOR,
                         
-                        '!iplocation'           => LVP :: LEVEL_MODERATOR,
-                        '!iploc'                => LVP :: LEVEL_MODERATOR,
-                        '!namelocation'         => LVP :: LEVEL_MODERATOR,
-                        '!nameloc'              => LVP :: LEVEL_MODERATOR,
-                        '!idlocation'           => LVP :: LEVEL_MODERATOR,
-                        '!idloc'                => LVP :: LEVEL_MODERATOR,
+                        '!iplocation'           => LVP::LEVEL_ADMINISTRATOR,
+                        '!iploc'                => LVP::LEVEL_ADMINISTRATOR,
+                        '!namelocation'         => LVP::LEVEL_ADMINISTRATOR,
+                        '!nameloc'              => LVP::LEVEL_ADMINISTRATOR,
+                        '!idlocation'           => LVP::LEVEL_ADMINISTRATOR,
+                        '!idloc'                => LVP::LEVEL_ADMINISTRATOR,
                         
-                        '!hidename'             => LVP :: LEVEL_MANAGEMENT,
-                        '!hideip'               => LVP :: LEVEL_MANAGEMENT
+                        '!hidename'             => LVP::LEVEL_MANAGEMENT,
+                        '!hideip'               => LVP::LEVEL_MANAGEMENT
                 );
                 
-                $pCommandHandler = $this -> m_pModule ['Commands'];
-                foreach ($aCommands as $sTrigger => $nLevel)
-                {
-                        $pCommandHandler -> register (new LVPCommand (
+                $pCommandHandler = $this->m_pModule['Commands'];
+                foreach ($aCommands as $sTrigger => $nLevel) {
+                        $pCommandHandler->register(new LVPCommand(
                                 $sTrigger,
                                 $nLevel,
                                 array ($this, 'handleCommands')
@@ -69,14 +64,12 @@ class LVPIpManager extends LVPEchoHandlerClass
          * This method provides us with a work around so that we always get a
          * signed integer.
          * 
-         * @param string $sIp The IP address in dotted format.
+         * @param string $ip The IP address in dotted format.
          * @return integer
          */
-        public function ip2long ($sIp)
-        {
-                list (, $nLongIp) = unpack ('l', pack ('l', ip2long ($sIp)));
-                
-                return $nLongIp;
+        public function ip2long($ip) {
+                list(, $longIp) = unpack('l', pack('l', ip2long($ip)));
+                return $longIp;
         }
         
         /**
@@ -84,16 +77,14 @@ class LVPIpManager extends LVPEchoHandlerClass
          * nickname into the IP database. Returns a boolean indicating it did
          * that successfully or not.
          * 
-         * @param string $sNickname The nickname belonging to the IP.
-         * @param string $sIp The IP address in dotted notation.
+         * @param string $nickname The nickname belonging to the IP.
+         * @param string $ip The IP address in dotted notation.
          * @return boolean
          */
-        public function insertIp ($sNickname, $sIp)
-        {
-                $nLongIp = $this -> ip2long ($sIp);
+        public function insertIp($nickname, $ip) {
+                $longIp = $this->ip2long($ip);
                 
-                $pStatement = LVPDatabase :: getInstance () -> prepare
-                (
+                $statement = LVPDatabase::getInstance()->prepare(
                         'INSERT INTO samp_addresses (
                                 user_id, join_date, nickname, ip_address
                         ) VALUES (
@@ -101,28 +92,26 @@ class LVPIpManager extends LVPEchoHandlerClass
                         )'
                 );
 
-                if ($pStatement === false)
-                {
-			$this -> m_pModule -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Error: ' . LVPDatabase::getInstance()->error);
-                        /** Not happenin' **/
+                if ($statement === false) {
+			$this->m_pModule->error($pBot, LVP::DEBUG_CHANNEL,
+                                'Error: ' . LVPDatabase::getInstance()->error);
                         return false;
                 }
                 
-                $pStatement -> bind_param ('si', $sNickname, $nLongIp);
+                $statement->bind_param('si', $nickname, $longIp);
                 
-                return $pStatement -> execute ();
+                return $statement->execute();
         }
         
         /**
          * This method returns true when the given ID is numeric and between 0
          * and 199. These are valid IDs within SA-MP.
          * 
-         * @param integer $nId The ID to check for validness.
+         * @param integer $id The ID to check for validness.
          * @return boolean
          */
-        public function isValidId ($nId)
-        {
-                return is_numeric ($nId) && $nId >= 0 && $nId <= 199;
+        public function isValidId($id) {
+                return is_numeric($id) && $id >= 0 && $id <= 199;
         }
         
         /**
@@ -131,24 +120,22 @@ class LVPIpManager extends LVPEchoHandlerClass
          * ranged inputs, like 255.255.*.*, but *.*.*.* is not accepted. It also
          * checks if every octet is between 0 and 255, if it's not a wildcard.
          * 
-         * @param string $sIp The input string we want to check.
+         * @param string $ip The input string we want to check.
          * @return boolean
          */
-        public function isRangedIp ($sIp)
-        {
-                $aMatches = array ();
-                if (preg_match ('/^(\d{1,3})\.(\d{1,3}|\*)\.(\d{1,3}|\*)\.\*$/', $sIp, $aMatches) == 0)
-                {
+        public function isRangedIp($ip) {
+                $matches = array ();
+                if (preg_match('/^(\d{1,3})\.(\d{1,3}|\*)\.(\d{1,3}|\*)\.\*$/', $ip, $matches) == 0) {
                         return false;
                 }
-                unset ($aMatches [0]);
+                unset($matches[0]);
                 
-                foreach ($aMatches as $nOctet)
-                {
-                        if ($nOctet == '*') continue;
+                foreach ($matches as $octet) {
+                        if ($octet == '*') {
+                                continue;
+                        }
                         
-                        if ($nOctet < 0 || $nOctet > 255)
-                        {
+                        if ($octet < 0 || $octet > 255) {
                                 return false;
                         }
                 }
@@ -160,24 +147,22 @@ class LVPIpManager extends LVPEchoHandlerClass
          * This method checks if the given string is a valid IP. Wildcards are
          * not considered valid by this method.
          * 
-         * @param string $sIp The input string to check.
+         * @param string $ip The input string to check.
          * @return boolean
          */
-        public function isValidIp ($sIp)
-        {
-                return ip2long ($sIp) !== false;
+        public function isValidIp($ip) {
+                return ip2long($ip) !== false;
         }
         
         /**
          * This method will simply check if the given IP address is an IPv6
          * address or not.
          * 
-         * @param string $sIp The IP string to check.
+         * @param string $ip The IP string to check.
          * @return boolean
          */
-        public function isValidIpV6 ($sIp)
-        {
-                return filter_var ($sIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
+        public function isValidIpV6($ip) {
+                return filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6) !== false;
         }
         
         /**
@@ -187,53 +172,41 @@ class LVPIpManager extends LVPEchoHandlerClass
          * the requested information and outputs a message understandable for
          * human beings with the information they need.
          * 
-         * @param LVPEchoHandler $pModule A pointer back to the main module.
-         * @param integer $nMode The mode the command is executing in.
-         * @param integer $nLevel The level we're operating at.
-         * @param string $sChannel The channel we'll be sending our output to.
-         * @param string $sNickname The nickname who triggered the command.
-         * @param string $sTrigger The trigger that set this in motion.
-         * @param string $sParams All of the text following the trigger.
-         * @param array $aParams Same as above, except split into an array.
+         * @param LVPEchoHandler $mainModule A pointer back to the main module.
+         * @param integer $mode The mode the command is executing in.
+         * @param integer $level The level we're operating at.
+         * @param string $channel The channel we'll be sending our output to.
+         * @param string $nickname The nickname who triggered the command.
+         * @param string $trigger The trigger that set this in motion.
+         * @param string $params All of the text following the trigger.
+         * @param array $splitParams Same as above, except split into an array.
          * @return string
          */
-        public function handleCommands ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
-        {
-                switch ($sTrigger)
-                {
+        public function handleCommands ($mainModule, $mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
+                switch ($trigger) {
                         case '!ipinfo':
                         case '!ipinfoci':
                         case '!ipinfoname':
                         case '!ipinfonameci':
-                        {
-                                return $this -> handleIpInfo ($nLevel, $sTrigger, $sParams, $aParams);
-                        }
+                                return $this->handleIpInfo($level, $trigger, $params, $splitParams);
                         
                         case '!iplocation':
                         case '!iploc':
-                        {
-                                return $this -> handleIpLocation ($sTrigger, $sParams, $aParams);
-                        }
+                                return $this->handleIpLocation($trigger, $params, $splitParams);
                         
                         case '!namelocation':
                         case '!nameloc':
                         case '!idlocation':
                         case '!idloc':
-                        {
-                                return $this -> handleNameLocation ($sTrigger, $sParams, $aParams);
-                        }
+                                return $this->handleNameLocation($trigger, $params, $splitParams);
                         
                         case '!hideip':
                         case '!hidename':
-                        {
-                                return $this -> handleHideFake ($sTrigger, $sParams, $aParams);
-                        }
+                                return $this->handleHideFake($trigger, $params, $splitParams);
                         
                         default:
-                        {
                                 echo 'This command has not been implemented.';
-                                return LVPCommand :: OUTPUT_ERROR;
-                        }
+                                return LVPCommand::OUTPUT_ERROR;
                 }
         }
         
@@ -581,13 +554,6 @@ class LVPIpManager extends LVPEchoHandlerClass
                         $bForceName = true;
                 }
                 
-                /*
-                if (count ($aParams) == 2)
-                {
-                        return $this -> handleIpInfoExtended ($nLevel, $sTrigger, $sParams, $aParams, $bCaseSensitive);
-                }
-                */
-                
                 if ($this -> isValidId ($sParams))
                 {
                         $pPlayer = $this -> m_pModule ['Players'] -> getPlayer ($sParams);
@@ -880,27 +846,4 @@ class LVPIpManager extends LVPEchoHandlerClass
                 
                 return LVPCommand :: OUTPUT_NORMAL;
         }
-        
-        /**
-         * Because there is so much information available from one IP-Name
-         * combination, we're providing a way to get that extra information by
-         * supplying a IP-Name combination. We'll search the database for the
-         * first parameter and refine that with the second. Then we'll show the
-         * user ID on the website (if available), the 10 last join dates,
-         * country and the number of times we have this combination in the
-         * database.
-         * 
-         * @param integer $nLevel The level we're operating at.
-         * @param string $sTrigger The trigger that set this in motion.
-         * @param string $sParams All of the text following the trigger.
-         * @param array $aParams Same as above, except split into an array.
-         * @param boolean $bCaseSensitive Whether we should handle names with case sensitivity.
-         * @return string
-         */
-        private function handleIpInfoExtended ($nLevel, $sTrigger, $sParams, $aParams, $bCaseSensitive)
-        {
-                echo 'Sorry, not yet implemented.';
-                return LVPCommand :: OUTPUT_ERROR;
-        }
 }
-?>

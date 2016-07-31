@@ -19,9 +19,8 @@ class LVP
         const   LEVEL_NONE                      = 0;
         const   LEVEL_VIP                       = 1;
         const   LEVEL_DEVELOPER                 = 2;
-        const   LEVEL_MODERATOR                 = 3;
-        const   LEVEL_ADMINISTRATOR             = 4;
-        const   LEVEL_MANAGEMENT                = 5;
+        const   LEVEL_ADMINISTRATOR             = 3;
+        const   LEVEL_MANAGEMENT                = 4;
         
         /**
          * Since LVP is only active on one IRC network, and since the bot is

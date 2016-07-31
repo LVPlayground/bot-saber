@@ -42,7 +42,6 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
 
         public function loadState() {
             if (file_exists (self::STATE_FILE)) {
-                /** Restore. **/
                 $this->m_aPlayers = unserialize(file_get_contents(self::STATE_FILE));
                 
                 unlink (self::STATE_FILE);
@@ -313,8 +312,8 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
         {
                 foreach ($this -> m_aPlayers as $pPlayer)
                 {
-                        if ($pPlayer ['Level'] >= LVP :: LEVEL_MODERATOR ||
-                            $pPlayer ['TempLevel'] >= LVP :: LEVEL_MODERATOR)
+                        if ($pPlayer ['Level'] >= LVP :: LEVEL_ADMINISTRATOR ||
+                            $pPlayer ['TempLevel'] >= LVP :: LEVEL_ADMINISTRATOR)
                         {
                                 return true;
                         }
@@ -334,7 +333,7 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
         {
                 foreach ($this -> m_aPlayers as $pPlayer)
                 {
-                        if ($pPlayer ['Level'] >= LVP :: LEVEL_MODERATOR)
+                        if ($pPlayer ['Level'] >= LVP :: LEVEL_ADMINISTRATOR)
                         {
                                 return true;
                         }
@@ -354,7 +353,7 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
         {
                 foreach ($this -> m_aPlayers as $pPlayer)
                 {
-                        if ($pPlayer ['TempLevel'] >= LVP :: LEVEL_MODERATOR)
+                        if ($pPlayer ['TempLevel'] >= LVP :: LEVEL_ADMINISTRATOR)
                         {
                                 return true;
                         }
@@ -465,4 +464,3 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
                 return new ArrayIterator ($this -> m_aPlayers);
         }
 }
-?>
