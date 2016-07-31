@@ -6,29 +6,31 @@
  * 
  * $Id: LVPConfiguration.php 187 2010-11-27 02:40:21Z Dik $
  */
-class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
-{
-        
+class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
+
+        /**
+         * The file where all settings are persisted.
+         */
+        const PERSISTENCE_FILE_NAME = 'Data/LVP/Configuration.dat';
+
         /**
          * The array holding all of the configurations of all the classes
          * in the LVPEchoHandler module.
          * 
          * @var array
          */
-        
-        private $m_aConfiguration = array ();
+        private $m_aConfiguration = array();
         
         /**
          * In order to have at least a bit of control when setting a value
          * to a configuration directive, we support filtering using PHP's
-         * filter_var () function. All filters are supported. If a directive
-         * doesn't have a filter specified in this array, we don't filter it.
+         * filter_var() function. If a directive doesn't have a filter
+         * specified in this array, we don't filter it.
          * 
          * @see http://nl3.php.net/manual/en/filter.filters.php
          * @var array
          */
-        
-        private $m_aDirectiveFilter = array ();
+        private $m_aDirectiveFilter = array();
         
         /**
          * The constructor has been overridden to provide functionality of
@@ -36,34 +38,27 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * 
          * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
          */
-        
-        public function __construct (LVPEchoHandler $pModule)
-        {
-                parent :: __construct ($pModule);
+        public function __construct(LVPEchoHandler $pModule) {
+                parent::__construct($pModule);
                 
-                if (file_exists ('Data/LVP/Configuration.dat'))
-                {
-                        /** Load 'em up, Scotty. **/
-                        $aLoadedSettings = unserialize (file_get_contents ('Data/LVP/Configuration.dat'));
-                        $this -> m_aConfiguration     = $aLoadedSettings [0];
-                        $this -> m_aDirectiveFilter   = $aLoadedSettings [1];
+                if (file_exists(self::PERSISTENCE_FILE_NAME)) {
+                        $aLoadedSettings = unserialize(file_get_contents(self::PERSISTENCE_FILE_NAME));
+                        $this -> m_aConfiguration = $aLoadedSettings [0];
+                        $this -> m_aDirectiveFilter = $aLoadedSettings [1];
                 }
                 
-                $this -> registerCommands ();
+                $this->registerCommands();
         }
-        
+
         /**
-         * The destructor will save the state of all the settings when the
-         * bot is shutting down. This way, we can restore them all when we
-         * return back in service.
+         * Saves the state of all the settings to a file on disk. This way, we
+         * can restore them all when we return back in service.
          */
-        
-        public function __destruct ()
-        {
-                file_put_contents ('Data/LVP/Players.dat', serialize (array
-                (
-                        $this -> m_aConfiguration,
-                        $this -> m_aDirectiveFilter
+        public function save() {
+                // TODO Change this to json_encode()
+                file_put_contents(self::PERSISTENCE_FILE_NAME, serialize(array(
+                        $this->m_aConfiguration,
+                        $this->m_aDirectiveFilter
                 )));
         }
         
@@ -72,20 +67,15 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * register some commands. Guess what? You'll see that happen in this
          * very method.
          */
-        
-        private function registerCommands ()
-        {
-                $aCommands = array
-                (
-                        '!lvpset'            => LVP :: LEVEL_MANAGEMENT,
-                        '!lvpget'            => LVP :: LEVEL_MANAGEMENT,
-                        '!lvpdirectives'     => LVP :: LEVEL_MANAGEMENT
+        private function registerCommands () {
+                $aCommands = array(
+                        '!lvpset' => LVP::LEVEL_MANAGEMENT,
+                        '!lvpget' => LVP::LEVEL_MANAGEMENT,
+                        '!lvpdirectives' => LVP::LEVEL_MANAGEMENT
                 );
                 
-                foreach ($aCommands as $sTrigger => $nLevel)
-                {
-                        $this -> m_pModule -> cmds -> register (new LVPCommand
-                        (
+                foreach ($aCommands as $sTrigger => $nLevel) {
+                        $this->m_pModule->cmds->register(new LVPCommand(
                                 $sTrigger, $nLevel, array ($this, 'handleCommands')
                         ));
                 }
@@ -104,14 +94,14 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param array $aParams Same as above, except split into an array.
          * @return integer
          */
-        
-        public function handleCommands ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
-        {
-                switch ($sTrigger)
-                {
-                        case '!lvpget':        { return $this -> handleDirectiveGet ($aParams);      }
-                        case '!lvpset':        { return $this -> handleDirectiveSet ($aParams);      }
-                        case '!lvpdirectives': { return $this -> handleDirectiveOverview (); }
+        public function handleCommands ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+                switch ($sTrigger) {
+                        case '!lvpget':
+                                return $this -> handleDirectiveGet ($aParams);
+                        case '!lvpset':
+                                return $this -> handleDirectiveSet ($aParams);
+                        case '!lvpdirectives':
+                                return $this -> handleDirectiveOverview ();
                 }
         }
         
@@ -121,79 +111,89 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * 
          * @param array $aParams The parameters given to the command.
          */
-        
-        private function handleDirectiveGet ($aParams)
-        {
-                if (count ($aParams) < 1)
-                {
+        private function handleDirectiveGet ($aParams) {
+                if (count ($aParams) < 1) {
                         echo '!lvpget Directive';
                         return LVPCommand :: OUTPUT_USAGE;
                 }
                 
-                if (!isset ($this [$aParams [0]]))
-                {
+                if (!isset ($this[$aParams[0]])) {
                         echo 'Unknown directive, please see !lvpdirectives.';
                         return LVPCommand :: OUTPUT_ERROR;
                 }
                 
-                echo 'Current value of "' . $aParams [0] . '": ' . $this [$aParams [0]];
+                echo 'Current value of "' . $aParams[0] . '": ' . $this[$aParams[0]];
                 return LVPCommand :: OUTPUT_INFO;
         }
         
         /**
-         * Perhaps the most important feature of this class, the directive set IRC
-         * command. A value of a directive can be changed through this command, which
-         * is handled by this method. If a directive has a filter setup, it even checks
-         * the input.
+         * Perhaps the most important feature of this class, the directive set
+         * IRC command. A value of a directive can be changed through this
+         * command, which is handled by this method. If a directive has a filter
+         * setup, it also checks the input.
          * 
          * @param array $aParams The parameters given to the command.
          */
-        
-        private function handleDirectiveSet ($aParams)
-        {
-                if (count ($aParams) < 2)
-                {
+        private function handleDirectiveSet($aParams) {
+                if (count($aParams) < 2) {
                         echo '!lvpset Directive Value';
                         return LVPCommand :: OUTPUT_USAGE;
                 }
                 
-                if (!isset ($this [$aParams [0]]))
-                {
+                if (!isset($this[$aParams[0]])) {
                         echo 'Unknown directive, please see !lvpdirectives.';
                         return LVPCommand :: OUTPUT_ERROR;
                 }
                 
-                list ($sPrefix, $sName) = explode ('.', $aParams [0]);
-                if (!$this -> validateDirectiveValue ($sPrefix, $sName, $aParams [1]))
-                {
-                        echo 'Invalid value specified for "' . $aParams [0] . '"';
+                list($sPrefix, $sName) = explode('.', $aParams[0]);
+                if (!$this->validateDirectiveValue($sPrefix, $sName, $aParams[1])) {
+                        echo 'Invalid value specified for "' . $aParams[0] . '"';
                         
                         $sType = '';
-                        switch ($this -> m_aDirectiveFilter [$aParams [0]])
-                        {
-                                case FILTER_VALIDATE_BOOLEAN:   { $sType = 'boolean';              break; }
-                                case FILTER_VALIDATE_EMAIL:     { $sType = 'e-mail address';       break; }
-                                case FILTER_VALIDATE_FLOAT:     { $sType = 'float';                break; }
-                                case FILTER_VALIDATE_INT:       { $sType = 'integer';              break; }
-                                case FILTER_VALIDATE_IP:        { $sType = 'IP address';           break; }
-                                case FILTER_VALIDATE_REGEXP:    { $sType = 'regular expression';   break; }
-                                case FILTER_VALIDATE_URL:       { $sType = 'URL';                  break; }
-                                
-                                default: { echo '.'; return LVPCommand :: OUTPUT_ERROR; }
+                        switch ($this->m_aDirectiveFilter[$aParams[0]]) {
+                                case FILTER_VALIDATE_BOOLEAN:
+                                        $sType = 'boolean';
+                                        break; 
+                                case FILTER_VALIDATE_EMAIL:
+                                        $sType = 'e-mail address';
+                                        break;
+                                case FILTER_VALIDATE_FLOAT:
+                                        $sType = 'float';
+                                        break;
+                                case FILTER_VALIDATE_INT:
+                                        $sType = 'integer';
+                                        break;
+                                case FILTER_VALIDATE_IP:
+                                        $sType = 'IP address';
+                                        break;
+                                case FILTER_VALIDATE_REGEXP:
+                                        $sType = 'regular expression';
+                                        break;
+                                case FILTER_VALIDATE_URL:
+                                        $sType = 'URL';
+                                        break;
+                                default:
+                                        echo '.';
+                                        return LVPCommand::OUTPUT_ERROR;
                         }
                         
                         echo '; ' . $sType . ' expected.';
-                        
-                        return LVPCommand :: OUTPUT_ERROR;
+                        return LVPCommand::OUTPUT_ERROR;
                 }
                 
-                $mOldValue = $this [$aParams [0]];
-                $this [$aParams [0]] = $aParams [1];
+                $mOldValue = $this[$aParams[0]];
+                $this[$aParams[0]] = $aParams[1];
                 
-                echo 'Changed value of "' . $aParams [0] . '" from ' . self::stringify($mOldValue) . ' to ' . self::stringify($this[$aParams[0]]) . '.';
-                return LVPCommand :: OUTPUT_INFO;
+                echo 'Changed value of "' . $aParams[0] . '" from ' .
+                        self::stringify($mOldValue) . ' to ' .
+                        self::stringify($this[$aParams[0]]) . '.';
+                return LVPCommand::OUTPUT_INFO;
         }
 
+        /** 
+         * Returns the string value of the given input. Only handles booleans at
+         * the moment, as PHP converts these to 0 or 1 otherwise.
+         */
         private static function stringify($value) {
                 if ($value === true) {
                         return 'true';
@@ -207,9 +207,7 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * Outputs an overview of the available directives for the !lvpdirectives
          * command.
          */
-        
-        private function handleDirectiveOverview ()
-        {
+        private function handleDirectiveOverview () {
                 echo 'Available directives: ' . implode (', ', array_keys ($this -> m_aConfiguration));
                 return LVPCommand :: OUTPUT_INFO;
         }
@@ -225,26 +223,22 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mDefault The default value of the setting.
          * @param integer $nFilterValidation The validation applied to the directive values.
          */
-        
-        public function addDirective ($sPrefix, $sName, $mDefault = 0, $nFilterValidation = -1)
-        {
-                if ($this -> isDirective ($sPrefix, $sName))
-                {
-                        /** Already known? Skip the formalities, we already got it from saved settings. **/
+        public function addDirective($sPrefix, $sName, $mDefault = 0, $nFilterValidation = -1) {
+                if ($this->isDirective($sPrefix, $sName)) {
+                        // Already known? Skip the formalities, we already got it from saved settings.
                         return;
                 }
                 
-                if (!isset ($this -> m_pModule [$sPrefix]))
-                {
-                        /** Unknown handler class? Don't bother then. **/
+                if (!isset($this->m_pModule[$sPrefix])) {
+                        // Unknown handler class? Don't bother then.
                         return;
                 }
                 
-                $this -> m_aConfiguration [$sPrefix . '.' . $sName] = $mDefault;
+                $this->m_aConfiguration[$sPrefix . '.' . $sName] = $mDefault;
+                $this->save();
                 
-                if ($nFilterValidation != -1)
-                {
-                        $this -> m_aDirectiveFilter [$sPrefix . '.' . $sName] = $nFilterValidation;
+                if ($nFilterValidation != -1) {
+                        $this->m_aDirectiveFilter[$sPrefix . '.' . $sName] = $nFilterValidation;
                 }
         }
         
@@ -255,10 +249,8 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param string $sName The name of the directive in that class.
          * @return boolean
          */
-        
-        public function isDirective ($sPrefix, $sName)
-        {
-                return isset ($this -> m_aConfiguration [$sPrefix . '.' . $sName]);
+        public function isDirective($sPrefix, $sName) {
+                return isset($this->m_aConfiguration[$sPrefix . '.' . $sName]);
         }
         
         /**
@@ -267,10 +259,8 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param string $sPrefix The abbreviated name of the class.
          * @param string $sName The name of the directive in that class.
          */
-        
-        public function getDirective ($sPrefix, $sName)
-        {
-                return $this -> m_aConfiguration [$sPrefix . '.' . $sName];
+        public function getDirective($sPrefix, $sName) {
+                return $this[$sPrefix . '.' . $sName];
         }
         
         /**
@@ -281,29 +271,25 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mValue The value to test.
          * @return boolean
          */
-        
-        public function validateDirectiveValue ($sPrefix, $sName, $mValue)
-        {
-                if (isset ($this -> m_aDirectiveFilter [$sPrefix . '.' . $sName]))
-                {
-                        $nFilter = $this -> m_aDirectiveFilter [$sPrefix . '.' . $sName];
-                        
-                        $aOptions = array ();
-                        if ($nFilter == FILTER_VALIDATE_BOOLEAN)
-                        {
-                                $aOptions ['flags'] = FILTER_NULL_ON_FAILURE;
-                        }
-                        
-                        $mValue = filter_var ($mValue, $nFilter, $aOptions);
-                        
-                        if ($nFilter == FILTER_VALIDATE_BOOLEAN && $mValue === null)
-                        {
-                                return false;
-                        }
-                        else if ($nFilter != FILTER_VALIDATE_BOOLEAN && $mValue === false)
-                        {
-                                return false;
-                        }
+        public function validateDirectiveValue ($sPrefix, $sName, $mValue) {
+                if (!isset($this->m_aDirectiveFilter[$sPrefix . '.' . $sName])) {
+                        return true;
+                }
+
+                $nFilter = $this->m_aDirectiveFilter[$sPrefix . '.' . $sName];
+                
+                $aOptions = array();
+                if ($nFilter == FILTER_VALIDATE_BOOLEAN) {
+                        $aOptions['flags'] = FILTER_NULL_ON_FAILURE;
+                }
+                
+                $mValue = filter_var($mValue, $nFilter, $aOptions);
+                
+                if ($nFilter == FILTER_VALIDATE_BOOLEAN && $mValue === null) {
+                        return false;
+                }
+                else if ($nFilter != FILTER_VALIDATE_BOOLEAN && $mValue === false) {
+                        return false;
                 }
                 
                 return true;
@@ -319,15 +305,13 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mValue The value to set it to.
          * @return boolean
          */
-        
-        public function setDirective ($sPrefix, $sName, $mValue)
-        {
-                if (!$this -> validateDirectiveValue ($sPrefix, $sName, $mValue))
-                {
+        public function setDirective ($sPrefix, $sName, $mValue) {
+                if (!$this->validateDirectiveValue($sPrefix, $sName, $mValue)) {
                         return false;
                 }
                 
-                $this -> m_aConfiguration [$sPrefix . '.' . $sName] = $mValue;
+                $this[$sPrefix . '.' . $sName] = $mValue;
+                $this->save();
                 
                 return true;
         }
@@ -338,10 +322,9 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param string $sPrefix The abbreviated name of the class.
          * @param string $sName The name of the directive in that class.
          */
-        
-        public function unsetDirective ($sPrefix, $sName)
-        {
-                unset ($this -> m_aConfiguration [$sPrefix . '.' . $sName]);
+        public function unsetDirective($sPrefix, $sName) {
+                unset($this[$sPrefix . '.' . $sName]);
+                $this->save();
         }
         
         /**
@@ -355,10 +338,8 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @return boolean
          */
-        
-        public function offsetExists ($mKey)
-        {
-                return isset ($this -> m_aConfiguration [$mKey]);
+        public function offsetExists($mKey) {
+                return isset($this->m_aConfiguration[$mKey]);
         }
         
         /**
@@ -372,10 +353,8 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @return mixed
          */
-        
-        public function offsetGet ($mKey)
-        {
-                return $this -> m_aConfiguration [$mKey];
+        public function offsetGet($mKey) {
+                return $this->m_aConfiguration[$mKey];
         }
         
         /**
@@ -389,32 +368,27 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @param mixed $mKey The new value for the specified key.
          */
-        
-        public function offsetSet ($mKey, $mValue)
-        {
-                if (isset ($this -> m_aDirectiveFilter [$mKey]))
-                {
-                        $nFilter = $this -> m_aDirectiveFilter [$mKey];
+        public function offsetSet($mKey, $mValue) {
+                if (isset($this->m_aDirectiveFilter[$mKey])) {
+                        $nFilter = $this->m_aDirectiveFilter[$mKey];
                         
-                        $aOptions = array ();
-                        if ($nFilter == FILTER_VALIDATE_BOOLEAN)
-                        {
+                        $aOptions = array();
+                        if ($nFilter == FILTER_VALIDATE_BOOLEAN) {
                                 $aOptions ['flags'] = FILTER_NULL_ON_FAILURE;
                         }
                         
-                        $mValue = filter_var ($mValue, $nFilter, $aOptions);
+                        $mValue = filter_var($mValue, $nFilter, $aOptions);
                         
-                        if ($nFilter == FILTER_VALIDATE_BOOLEAN && $mValue === null)
-                        {
+                        if ($nFilter == FILTER_VALIDATE_BOOLEAN && $mValue === null) {
                                 return;
                         }
-                        else if ($nFilter != FILTER_VALIDATE_BOOLEAN && $mValue === false)
-                        {
+                        else if ($nFilter != FILTER_VALIDATE_BOOLEAN && $mValue === false) {
                                 return;
                         }
                 }
                 
-                $this -> m_aConfiguration [$mKey] = $mValue;
+                $this->m_aConfiguration[$mKey] = $mValue;
+                $this->save();
         }
         
         /**
@@ -427,10 +401,8 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess
          * 
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          */
-        
-        public function offsetUnset ($mKey)
-        {
-                unset ($this -> m_aConfiguration [$mKey]);
+        public function offsetUnset($mKey) {
+                unset ($this->m_aConfiguration[$mKey]);
+                $this->save();
         }
 }
-?>
