@@ -119,9 +119,11 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * @param string $message The line written the channel to look up who is DJin, if present.
      */
     public function processChannelMessage ($nickname, $message) {
-        if (!$this->storeDjName($message, ' is off --> Coming up: ')) {
-            if (!$this->storeDjName($message, '[LVP Radio] Current DJ: ')) {
-                $this->storeDjName($message, 'The current DJ is: ', false);
+        if (strtolower($sNickname) == LVPRadioHandler::RADIO_BOT_NAME) {
+            if ($this->storeDjName($message, ' is off --> Coming up: ') ||
+                $this->storeDjName($message, '[LVP Radio] Current DJ: ') ||
+                $this->storeDjName($message, 'The current DJ is: ', false)) {
+                return;
             }
         }
 
