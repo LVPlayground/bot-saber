@@ -189,7 +189,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         '#LVP.Managers'         => LVP :: LEVEL_MANAGEMENT,
                         '#LVP.Management'       => LVP :: LEVEL_MANAGEMENT,
                         '#LVP.NL'               => LVP :: LEVEL_NONE,
-                        '#LVP.Radio'            => LVP :: LEVEL_NONE,
                         '#LVP.VIP'              => LVP :: LEVEL_VIP,
                         '#Bot'                  => LVP :: LEVEL_MANAGEMENT
                 );
@@ -396,13 +395,19 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 if ($pBot ['Network'] != LVP :: NETWORK)
                 {
                         // Other network than where LVP is, so we'll bail out.
-                        return ;
+                        return;
                 }
 
                 if (!isset ($this -> m_aLvpChannels [strtolower ($sChannel)]))
                 {
-                        // Not an LVP channel either.
-                        return ;
+                        // Not an LVP channel either, but perhaps we are in the radio-channel
+                        if (strtolower ($sNickname) == $this ['Radio'] -> getRadioBotName ()
+                            && strtolower($sChannel) == LVP::RADIO_CHANNEL)
+                        {
+                            // Let the RadioHandler process this message
+                            $this ['Radio'] -> processChannelMessage ($sMessage);
+                        }
+                        return;
                 }
 
                 if (in_array ($pBot -> In -> User -> Hostname, $this -> m_aNuwaniInfo ['Hostname']))
@@ -421,11 +426,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
 
                                 // We'll "fall through" to the command handler automatically.
                         }
-                }
-                else if (strtolower ($sNickname) == $this ['Radio'] -> getRadioBotName ())
-                {
-                        // Let the RadioHandler process this message
-                        $this ['Radio'] -> processChannelMessage ($sMessage);
                 }
 
                 $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, $sMessage);
