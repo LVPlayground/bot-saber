@@ -115,9 +115,10 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * Called from Module.php when the user's hostname matches the hostname of the radiobot. We
      * want to check the message for who is DJing.
      *
+     * @param string $nickname The nickname of the person who wrote the line.
      * @param string $message The line written the channel to look up who is DJin, if present.
      */
-    public function processChannelMessage ($message) {
+    public function processChannelMessage ($nickname, $message) {
         if (!$this->storeDjName($message, ' is off --> Coming up: ')) {
             if (!$this->storeDjName($message, '[LVP Radio] Current DJ: ')) {
                 $this->storeDjName($message, 'The current DJ is: ', false);
@@ -132,10 +133,10 @@ class LVPRadioHandler extends LVPEchoHandlerClass
         // TODO Future improvement: use the ChannelTracking class.
         if ($trigger == self::STOPAUTODJ_COMMAND_TRIGGER) {
             $this->m_isStopAutoDjCommandExecuting = true;
-            $this->m_nicknameOfPlayerExecutingStopAutoDjCommand = $sNickname;
+            $this->m_nicknameOfPlayerExecutingStopAutoDjCommand = $nickname;
 
-            $pBot = $this->m_pModule->getBot($sChannel);
-            $pBot->send('NAMES ' . LVP::RADIO_CHANNEL);
+            $bot = $this->m_pModule->getBot(LVP::RADIO_CHANNEL);
+            $bot->send('NAMES ' . LVP::RADIO_CHANNEL);
         }
     }
 
