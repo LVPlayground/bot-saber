@@ -194,29 +194,30 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     }
 
     /**
-     * We need to check for the line for a few specific given words who is DJing. Here we process
-     * the given line with strpos and substr to determine if it is a correct line and if it matches
-     * who is DJing.
+     * This method looks for the name of the current DJ in the given incoming
+     * message.
      *
-     * @param string $sMessage
-     * @param string $searchString
-     * @param bool $omitLastCharacter
+     * @param string $incomingMessage The message to process.
+     * @param string $searchString The string after which the name of the DJ can be found.
+     * @param bool $omitLastCharacter Whether the last character of the name of the DJ should be omitted. 
      *
-     * @return bool Whether there is a match or not.
+     * @return bool Whether the name of the DJ was found.
      */
-    private function didCheckForDjDetailsWithResult ($sMessage, $searchString, $omitLastCharacter = true)
+    private function storeDjName($incomingMessage, $searchString, $omitLastCharacter = true)
     {
-        $startMessageLength = strpos ($sMessage, $searchString);
-        if ($startMessageLength !== false)
-        {
-            $djName = substr ($sMessage, $startMessageLength + strlen ($searchString), -1);
-            if (!$omitLastCharacter)
-                $djName = substr ($sMessage, $startMessageLength + strlen ($searchString));
+        $searchPos = strpos($incomingMessage, $searchString);
+        if ($searchPos !== false) {
+            $djName = substr($incomingMessage, $searchPos + strlen($searchString));
 
-            $this -> m_currentDjName = $djName;
-            $this -> m_isAutoDjRunning = strtolower ($this -> m_currentDjName) == $this -> m_autoDjName;
+            if ($omitLastCharacter) {
+                $djName = substr($djName, -1);
+            }
+
+            $this->m_currentDjName = $djName;
+            $this->m_isAutoDjRunning = strtolower($this->m_currentDjName) == $this->m_autoDjName;
             return true;
         }
+
         return false;
     }
 
