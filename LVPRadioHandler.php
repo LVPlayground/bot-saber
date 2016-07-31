@@ -12,6 +12,11 @@ class LVPRadioHandler extends LVPEchoHandlerClass
     const STOPAUTODJ_COMMAND_TRIGGER = '!stopautodj';
 
     /**
+     * Name of the irc-bot who provides the radio-information.
+     */
+    const RADIO_BOT_NAME = 'lvp_radio';
+
+    /**
      * Keeps track of whether the autodj is currently running.
      *
      * @var bool
@@ -24,13 +29,6 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * @var string
      */
     private $m_currentDjName = null;
-
-    /**
-     * Name of the irc-bot who provides the radio-information.
-     *
-     * @var string
-     */
-    private $m_radioBotName = 'lvp_radio';
 
     /**
      * Name of the DJ when the autodj is active.
@@ -136,34 +134,33 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      *
      * @param array $names Names of the players with the rights in the defined and executed channel
      */
-    public function handleNamesChecking(array $names)
-    {
-        if ($this -> m_isStopAutoDjCommandExecuting)
-        {
-            foreach ($names as $rightsWithNickname)
-            {
-                if (strpos ($rightsWithNickname, $this -> m_nicknameOfPlayerExecutingStopAutoDjCommand) !== false)
-                {
-                    $pBot = $this -> m_pModule -> getBot (LVP::RADIO_CHANNEL);
-                    if (in_array($rightsWithNickname[0], array ('+', '%', '@', '&', '~')))
-                    {
-                        if ($this -> m_isAutoDjRunning == true)
-                            $pBot -> send ('PRIVMSG ' . $this -> m_radioBotName . ' :!autodj-force');
-                        else
-                        {
-                            $this -> m_pModule -> error ($pBot, LVP::RADIO_CHANNEL,
-                                'The autoDJ is not streaming. Please ask ' . $this -> m_currentDjName . ' to stop streaming.',
-                                LVPCommand::MODE_IRC);
-                        }
-                    }
-                    else
-                    {
-                        $this -> m_pModule -> error ($pBot, LVP::RADIO_CHANNEL,
-                            'Only available for voiced users and above', LVPCommand::MODE_IRC);
-                    }
+    public function handleNamesChecking(array $names) {
+        if (!$this -> m_isStopAutoDjCommandExecuting) {
+            return;
+        }
 
-                    break;
+        foreach ($names as $rightsWithNickname)
+        {
+            if (strpos ($rightsWithNickname, $this -> m_nicknameOfPlayerExecutingStopAutoDjCommand) === false) {
+                continue;
+            }
+
+            $pBot = $this -> m_pModule -> getBot (LVP::RADIO_CHANNEL);
+            if (in_array($rightsWithNickname[0], array ('+', '%', '@', '&', '~')))
+            {
+                if ($this -> m_isAutoDjRunning == true)
+                    $pBot -> send ('PRIVMSG ' . self::RADIO_BOT_NAME . ' :!autodj-force');
+                else
+                {
+                    $this -> m_pModule -> error ($pBot, LVP::RADIO_CHANNEL,
+                        'The autoDJ is not streaming. Please ask ' . $this -> m_currentDjName . ' to stop streaming.',
+                        LVPCommand::MODE_IRC);
                 }
+            }
+            else
+            {
+                $this -> m_pModule -> error ($pBot, LVP::RADIO_CHANNEL,
+                    'Only available for voiced users and above', LVPCommand::MODE_IRC);
             }
         }
 
@@ -211,25 +208,5 @@ class LVPRadioHandler extends LVPEchoHandlerClass
         }
 
         return false;
-    }
-
-    /**
-     * Gives the name of the channel where this command can only be handled in.
-     *
-     * @return string Name of the channel
-     */
-    public function getLvpRadioChannelName()
-    {
-        return LVP::RADIO_CHANNEL;
-    }
-
-    /**
-     * Gives the name of the bot who provides us the messages in the radio-channel.
-     *
-     * @return string Name of the bot
-     */
-    public function getRadioBotName()
-    {
-        return $this -> m_radioBotName;
     }
 }

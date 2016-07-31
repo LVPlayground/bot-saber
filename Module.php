@@ -349,9 +349,9 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 if (strtolower ($sChannel) != LVP :: CREW_CHANNEL)
                         $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, '!updatecrew');
 
-                $radioChannelName = $this ['Radio'] -> getLvpRadioChannelName ();
-                if (strtolower ($sChannel) != $radioChannelName)
-                        $pBot -> send ('PRIVMSG ' . $radioChannelName . ' :!dj');
+                if (strtolower ($sChannel) != LVP::RADIO_CHANNEL) {
+                        $pBot -> send ('PRIVMSG ' . LVP::RADIO_CHANNEL . ' :!dj');
+                }
 
         }
 
@@ -383,7 +383,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 if (!isset ($this -> m_aLvpChannels [strtolower ($sChannel)]))
                 {
                         // Not an LVP channel either, but perhaps we are in the radio-channel
-                        if (strtolower ($sNickname) == $this ['Radio'] -> getRadioBotName ()
+                        if (strtolower ($sNickname) == LVPRadioHandler::RADIO_BOT_NAME
                             && strtolower($sChannel) == LVP::RADIO_CHANNEL)
                         {
                             // Let the RadioHandler process this message
@@ -429,7 +429,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         return;
                 }
 
-                if (strtolower ($nickname) == $this ['Radio'] -> getRadioBotName())
+                if (strtolower ($nickname) == LVPRadioHandler::RADIO_BOT_NAME)
                 {
                         // Let the RadioHandler process this private message
                         $this ['Radio'] -> processPrivateMessage ($message);
