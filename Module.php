@@ -331,28 +331,25 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * The onChannelJoin callback will check if this bot has just joined a specific LVP
          * channel. If so, we will execute some specific commands to make sure the handler is up
          * to date.
-         *
          * For #LVP.Crew it executes the !updatecrew-cmd to have !ingamecrew up to date
          * For #LVP.Radio it executes the !dj-cmd publicly to know the current dj
          *
-         * @param Bot $pBot The bot that joined the channel.
-         * @param string $sChannel The channel that was joined.
-         * @param stirng $sNickname The nickname that joined the channel.
+         * @param Bot    $bot      The bot that joined the channel.
+         * @param string $channel  The channel that was joined.
+         * @param string $nickname The nickname that joined the channel.
          */
-        public function onChannelJoin (Bot $pBot, $sChannel, $sNickname)
-        {
-                if ($sNickname != $pBot ['Nickname'])
-                {
-                        return ;
-                }
+        public function onChannelJoin (Bot $bot, string $channel, string $nickname) {
+            if ($nickname != $bot['Nickname']) {
+                return;
+            }
 
-                if (strtolower ($sChannel) != LVP :: CREW_CHANNEL)
-                        $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, '!updatecrew');
+            if (strtolower($channel) != LVP::CREW_CHANNEL) {
+                $this ['Commands'] -> handle ($bot, $channel, $nickname, '!updatecrew');
+            }
 
-                if (strtolower ($sChannel) != LVP::RADIO_CHANNEL) {
-                        $pBot -> send ('PRIVMSG ' . LVP::RADIO_CHANNEL . ' :!dj');
-                }
-
+            if (strtolower($channel) != LVP::RADIO_CHANNEL) {
+                $this->privmsg($bot, LVP::RADIO_CHANNEL, '!dj');
+            }
         }
 
         /**
@@ -384,10 +381,9 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 {
                         // Not an LVP channel either, but perhaps we are in the radio-channel
                         if (strtolower ($sNickname) == LVPRadioHandler::RADIO_BOT_NAME
-                            && strtolower($sChannel) == LVP::RADIO_CHANNEL)
-                        {
+                            && strtolower($sChannel) == LVP::RADIO_CHANNEL) {
                             // Let the RadioHandler process this message
-                            $this ['Radio'] -> processChannelMessage ($sMessage);
+                            $this['Radio']->processChannelMessage($sMessage);
                         }
                         return;
                 }
@@ -421,19 +417,15 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $nickname Nickname of the user who send the message privately
          * @param string $message Message which we received from the user
          */
-        public function onPrivmsg (Bot $bot, string $nickname, string $message)
-        {
-                if ($bot ['Network'] != LVP :: NETWORK)
-                {
-                        // Other network than where LVP is, so we'll bail out.
-                        return;
-                }
-
-                if (strtolower ($nickname) == LVPRadioHandler::RADIO_BOT_NAME)
-                {
-                        // Let the RadioHandler process this private message
-                        $this ['Radio'] -> processPrivateMessage ($message);
-                }
+        public function onPrivmsg (Bot $bot, string $nickname, string $message) {
+            if ($bot['Network'] == LVP::NETWORK
+            && strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
+                // Let the RadioHandler process this private message
+                $this['Radio']->processPrivateMessage($message);
+            } else {
+                // Other network than where LVP is, so we'll bail out.
+                return;
+            }
         }
 
         /**
@@ -444,19 +436,14 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $channel Name of the channel where names are received from
          * @param string $names Space-seperated string of userrights and the username
          */
-        public function onChannelNames (Bot $bot, string $channel, string $names)
-        {
-                if ($bot ['Network'] != LVP :: NETWORK)
-                {
-                        // Other network than where LVP is, so we'll bail out.
-                        return;
-                }
-
-                if ($channel == $this ['Radio'] -> getLvpRadioChannelName ())
-                {
-                        // Let the RadioHandler check the names
-                        $this ['Radio'] -> handleNamesChecking (explode (' ', $names));
-                }
+        public function onChannelNames (Bot $bot, string $channel, string $names) {
+            if ($bot['Network'] == LVP::NETWORK && strtolower($channel) == LVP::RADIO_CHANNEL) {
+                // Let the RadioHandler check the names
+                $this['Radio']->handleNamesChecking(explode(' ', $names));
+            } else {
+                // Other network than where LVP is, so we'll bail out.
+                return;
+            }
         }
 
         /**
