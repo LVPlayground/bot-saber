@@ -236,7 +236,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
                         return LVPCommand :: OUTPUT_USAGE;
                 }
                 
-                $sSubject     = array_shift ($aParams);
+                $sSubject     = Util::stripFormat(array_shift($aParams));
                 $sOrigSubject = $sSubject;
                 $sFakeString  = empty ($aParams) ? null : implode (' ', $aParams);
                 
@@ -328,8 +328,11 @@ class LVPIpManager extends LVPEchoHandlerClass {
          */
         private function handleIpLocation ($sTrigger, $sParams, $aParams)
         {
-                if ($sParams == null)
-                {
+                if ($sParams !== null) {
+                        $sParams = Util::stripFormat($sParams);
+                }
+
+                if ($sParams === null || $sParams === '') {
                         echo $sTrigger . ' IP // ' . $sTrigger . ' Hostname';
                         return LVPCommand :: OUTPUT_USAGE;
                 }
@@ -409,8 +412,11 @@ class LVPIpManager extends LVPEchoHandlerClass {
          */
         private function handleNameLocation ($sTrigger, $sParams, $aParams)
         {
-                if ($sParams == null)
-                {
+                if ($sParams !== null) {
+                        $sParams = Util::stripFormat($sParams);
+                }
+
+                if ($sParams === null || $sParams === '') {
                         echo $sTrigger . ' Name // ' . $sTrigger . ' ID';
                         return LVPCommand :: OUTPUT_USAGE;
                 }
@@ -533,56 +539,52 @@ class LVPIpManager extends LVPEchoHandlerClass {
          * @param array $aParams Same as above, except split into an array.
          * @return string
          */
-        private function handleIpInfo ($nLevel, $sTrigger, $sParams, $aParams)
-        {
-                if ($sParams == null || count ($aParams) > 1)
-                {
-                        echo $sTrigger . ' IP // ' . $sTrigger . ' Name // ' .
-                                $sTrigger . ' ID'; // ' . $sTrigger . ' IP Name';
-                        return LVPCommand :: OUTPUT_USAGE;
+        private function handleIpInfo($nLevel, $sTrigger, $sParams, $aParams) {
+                if ($sParams !== null) {
+                        $sParams = Util::stripFormat($sParams);
+                }
+
+                if ($sParams === null || $sParams === '' || count($aParams) > 1) {
+                        echo $sTrigger . ' IP // ' .
+                                $sTrigger . ' Name // ' .
+                                $sTrigger . ' ID';
+                        return LVPCommand::OUTPUT_USAGE;
                 }
                 
                 $bCaseSensitive = true;
-                $bForceName     = false;
-                if (strpos ($sTrigger, 'ci') !== false)
-                {
+                $bForceName = false;
+                if (strpos($sTrigger, 'ci') !== false) {
                         $bCaseSensitive = false;
                 }
                 
-                if (strpos ($sTrigger, 'name') !== false)
-                {
+                if (strpos($sTrigger, 'name') !== false) {
                         $bForceName = true;
                 }
                 
-                if ($this -> isValidId ($sParams))
-                {
-                        $pPlayer = $this -> m_pModule ['Players'] -> getPlayer ($sParams);
+                if ($this->isValidId($sParams)) {
+                        $pPlayer = $this->m_pModule['Players']->getPlayer($sParams);
                         
-                        if ($pPlayer == null)
-                        {
+                        if ($pPlayer == null) {
                                 echo 'ID not found.';
-                                return LVPCommand :: OUTPUT_ERROR;
+                                return LVPCommand::OUTPUT_ERROR;
                         }
                         
-                        $sParams = $pPlayer ['Nickname'];
+                        $sParams = $pPlayer['Nickname'];
                 }
+
                 $sOrigParams = $sParams;
                 
-                $nType = self :: TYPE_NICKNAME;
-                if (!$bForceName)
-                {
-                        if ($this -> isValidIpV6 ($sParams))
-                        {
+                $nType = self::TYPE_NICKNAME;
+                if (!$bForceName) {
+                        if ($this->isValidIpV6($sParams)) {
                                 echo 'Sorry, no IPv6 support.';
-                                return LVPCommand :: OUTPUT_ERROR;
+                                return LVPCommand::OUTPUT_ERROR;
                         }
-                        else if ($this -> isValidIp ($sParams))
-                        {
-                                $nType = self :: TYPE_IP;
+                        else if ($this->isValidIp($sParams)) {
+                                $nType = self::TYPE_IP;
                         }
-                        else if ($this -> isRangedIp ($sParams))
-                        {
-                                $nType = self :: TYPE_RANGED_IP;
+                        else if ($this->isRangedIp($sParams)) {
+                                $nType = self::TYPE_RANGED_IP;
                         }
                 }
                 
