@@ -1,7 +1,7 @@
 <?php
-use Nuwani \ Bot;
-use Nuwani \ BotManager;
-use Nuwani \ Timer;
+use Nuwani\Bot;
+use Nuwani\BotManager;
+use Nuwani\Timer;
 
 /**
  * LVPEchoHandler module for Nuwani v2
@@ -446,10 +446,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @return mixed
          */
 
-        public function __get ($sProperty)
-        {
-                switch ($sProperty)
-                {
+        public function __get($sProperty) {
+                switch ($sProperty) {
                         case 'db':              { return LVPDatabase :: getInstance (); }
                         case 'config':          { return $this -> m_pConfiguration;     }
                         case 'crew':            { return $this -> m_pCrewHandler;       }
@@ -471,9 +469,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @return boolean
          */
-        public function offsetExists ($mKey)
-        {
-                return $this -> offsetGet ($mKey) !== false;
+        public function offsetExists($mKey) {
+                return $this->offsetGet($mKey) !== false;
         }
 
         /**
@@ -483,13 +480,14 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * Those names seem pretty obvious to me as to what they'll return. If
          * not, look in the code below.
          *
+         * @deprecated I don't like this pattern very much, so as of now, it's
+         * deprecated in favor of the __get() style properties.
+         *
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @return mixed
          */
-        public function offsetGet ($mKey)
-        {
-                switch ($mKey)
-                {
+        public function offsetGet($mKey) {
+                switch ($mKey) {
                         case 'db':              case 'Database':        { return LVPDatabase :: getInstance (); }
                         case 'config':          case 'Configuration':   { return $this -> m_pConfiguration;     }
                         case 'crew':            case 'Crew':            { return $this -> m_pCrewHandler;       }
@@ -511,9 +509,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          * @param mixed $mValue The value supplied when setting something.
          */
-        public function offsetSet ($mKey, $mValue)
-        {
-                throw new Exception ("Not supported");
+        public function offsetSet($mKey, $mValue) {
+                throw new Exception("Not supported");
         }
 
         /**
@@ -522,9 +519,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          *
          * @param mixed $mKey The key used when getting something from this class using array syntax.
          */
-        public function offsetUnset ($mKey)
-        {
-                throw new Exception ("Not supported");
+        public function offsetUnset($mKey) {
+                throw new Exception("Not supported");
         }
 
         /**
@@ -535,20 +531,17 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @throws Exception when no bots were found.
          * @return Bot
          */
-        public function getBot ($sChannel)
-        {
-                $pBot = BotManager :: getInstance () -> offsetGet ('network:' . LVP :: NETWORK . ' channel:' . $sChannel);
+        public function getBot($sChannel) {
+                $pBot = BotManager::getInstance()->offsetGet('network:' . LVP::NETWORK . ' channel:' . $sChannel);
 
-                if ($pBot instanceof BotGroup)
-                {
-                        if (count ($pBot) == 0)
-                        {
+                if ($pBot instanceof BotGroup) {
+                        if (count($pBot) == 0) {
                                 // Wait. That's not right.
-                                throw new Exception ('No bot could be found which is connected to network "' . LVP :: NETWORK . '" and in channel ' . $sChannel);
+                                throw new Exception('No bot could be found which is connected to network "' .
+                                        LVP::NETWORK . '" and in channel ' . $sChannel);
                         }
-                        else if (count ($pBot) > 1)
-                        {
-                                $pBot = $pBot -> seek (0);
+                        else if (count($pBot) > 1) {
+                                $pBot = $pBot->seek(0);
                         }
                 }
 
@@ -564,41 +557,38 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function privmsg ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                if ($pBot == null)
-                {
-                        $pBot = $this -> getBot ($sDestination);
+        public function privmsg($pBot, $sDestination, $sMessage, $nMode = null) {
+                if ($pBot == null) {
+                        $pBot = $this->getBot($sDestination);
                 }
 
-                if ($nMode == null)
-                {
-                        $nMode = LVPCommand :: MODE_IRC;
+                if ($nMode == null) {
+                        $nMode = LVPCommand::MODE_IRC;
                 }
 
-                foreach (explode (PHP_EOL, $sMessage) as $sMessage)
-                {
-                        $sMessage = trim ($sMessage);
+                foreach (explode (PHP_EOL, $sMessage) as $sMessage) {
+                        $sMessage = trim($sMessage);
+                        if ($sMessage === '') {
+                                // Skip empty lines
+                                continue;
+                        }
 
-                        if ($nMode != LVPCommand :: MODE_IRC)
-                        {
-                                $sMessage = Util :: stripFormat ($sMessage);
+                        if ($nMode != LVPCommand::MODE_IRC) {
+                                $sMessage = Util::stripFormat($sMessage);
 
-                                if (substr ($sMessage, 0, 2) == '* ')
-                                {
-                                        $sMessage = substr ($sMessage, 2);
+                                if (substr($sMessage, 0, 2) == '* ') {
+                                        $sMessage = substr($sMessage, 2);
                                 }
 
                                 $sPrefix = '!admin ';
-                                if ($nMode == LVPCommand :: MODE_MAIN_CHAT)
-                                {
+                                if ($nMode == LVPCommand::MODE_MAIN_CHAT) {
                                         $sPrefix = '!msg ';
                                 }
 
                                 $sMessage = $sPrefix . $sMessage;
                         }
 
-                        $pBot -> send ('PRIVMSG ' . $sDestination . ' :' . $sMessage);
+                        $pBot->send('PRIVMSG ' . $sDestination . ' :' . $sMessage);
                 }
 
                 return true;
@@ -614,14 +604,12 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function error ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                if ($sDestination != LVP :: DEBUG_CHANNEL)
-                {
-                        $sDestination .= ',' . LVP :: DEBUG_CHANNEL;
+        public function error($pBot, $sDestination, $sMessage, $nMode = null) {
+                if ($sDestination != LVP::DEBUG_CHANNEL) {
+                        $sDestination .= ',' . LVP::DEBUG_CHANNEL;
                 }
 
-                return $this -> privmsg ($pBot, $sDestination, '4* Error: ' . $sMessage, $nMode);
+                return $this->privmsg($pBot, $sDestination, '4* Error: ' . $sMessage, $nMode);
         }
 
         /**
@@ -634,9 +622,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function info ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                return $this -> privmsg ($pBot, $sDestination, '10* Info: ' . $sMessage, $nMode);
+        public function info($pBot, $sDestination, $sMessage, $nMode = null) {
+                return $this->privmsg($pBot, $sDestination, '10* Info: ' . $sMessage, $nMode);
         }
 
         /**
@@ -650,9 +637,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function notice ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                return $this -> privmsg ($pBot, $sDestination, '7* Notice: ' . $sMessage, $nMode);
+        public function notice($pBot, $sDestination, $sMessage, $nMode = null) {
+                return $this->privmsg($pBot, $sDestination, '7* Notice: ' . $sMessage, $nMode);
         }
 
         /**
@@ -665,9 +651,8 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function success ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                return $this -> privmsg ($pBot, $sDestination, '3* Success: ' . $sMessage, $nMode);
+        public function success($pBot, $sDestination, $sMessage, $nMode = null) {
+                return $this->privmsg($pBot, $sDestination, '3* Success: ' . $sMessage, $nMode);
         }
 
         /**
@@ -680,8 +665,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $sMessage The actual message to send.
          * @param integer $nMode The mode the output should be processed at.
          */
-        public function usage ($pBot, $sDestination, $sMessage, $nMode = null)
-        {
-                return $this -> privmsg ($pBot, $sDestination, '10* Usage: ' . $sMessage, $nMode);
+        public function usage($pBot, $sDestination, $sMessage, $nMode = null) {
+                return $this->privmsg($pBot, $sDestination, '10* Usage: ' . $sMessage, $nMode);
         }
 }

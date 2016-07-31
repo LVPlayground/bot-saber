@@ -1,5 +1,6 @@
 <?php
-use Nuwani \ ModuleManager;
+use Nuwani\Configuration;
+use Nuwani\ModuleManager;
 
 /**
  * LVPEchoHandler module for Nuwani v2
@@ -16,8 +17,8 @@ use Nuwani \ ModuleManager;
  * @author Peter Beverloo <peter@lvp-media.com>
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPDatabase extends MySQLi
-{
+class LVPDatabase extends MySQLi {
+
         /**
          * This property contains the instance of the active MySQLi instance.
          * By utilizing Singleton here we avoid having MySQL connections for
@@ -39,9 +40,8 @@ class LVPDatabase extends MySQLi
          * The constructor will create a new connection with the predefined
          * connection details. It's private because of the Singleton pattern.
          */
-        public function __construct ()
-        {
-                $aConfiguration = Configuration :: getInstance () -> get ('LVPDatabase');
+        public function __construct() {
+                $aConfiguration = Configuration::getInstance()->get('LVPDatabase');
 
                 parent::__construct(
                         $aConfiguration ['hostname'],
@@ -57,28 +57,24 @@ class LVPDatabase extends MySQLi
          * 
          * @return LVPDatabase
          */
-        public static function getInstance ()
-        {
-                if (self :: $s_pInstance == null || self :: $s_nRestartTime < time ())
-                {
-                        self :: restart ();
-                        self :: $s_nRestartTime = time () + 86400;
+        public static function getInstance() {
+                if (self::$s_pInstance == null || self::$s_nRestartTime < time()) {
+                        self::restart();
+                        self::$s_nRestartTime = time() + 86400;
                         
-                        self :: $s_pInstance = new self ();
+                        self::$s_pInstance = new self();
                 }
                 
-                return self :: $s_pInstance;
+                return self::$s_pInstance;
         }
         
         /**
          * I've overridden the ping method so that it reconnects using our
          * connection details and stores the instance in the right property.
          */
-        public function ping ()
-        {
-                if (!parent :: ping ())
-                {
-                        self :: $s_pInstance = new self ();
+        public function ping() {
+                if (!parent::ping()) {
+                        self::$s_pInstance = new self();
                 }
         }
         
@@ -90,14 +86,11 @@ class LVPDatabase extends MySQLi
          * @param string $sStatement The statement to prepare.
          * @return MySQLi_STMT
          */
-        public function prepare ($sStatement)
-        {
-                $pStatement = parent :: prepare ($sStatement);
-                if (!is_object ($pStatement))
-                {
-                        /** Oh fuck, log the error. **/
-                        ModuleManager :: getInstance () -> offsetGet ('LVPEchoHandler') ->
-                                error (null, LVP :: DEBUG_CHANNEL, 'Preparing statement failed: ' . $this -> error);
+        public function prepare($sStatement) {
+                $pStatement = parent::prepare($sStatement);
+                if (!is_object($pStatement)) {
+                        ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
+                                error(null, LVP::DEBUG_CHANNEL, 'Preparing statement failed: ' . $this->error);
                         
                         return false;
                 }
@@ -113,19 +106,16 @@ class LVPDatabase extends MySQLi
          * @param integer $nResultMode The way you want to receive the result.
          * @return mixed
          */
-        public function query ($sQuery, $nResultMode = MYSQLI_STORE_RESULT)
-        {
-                ob_start ();
-                $mResult = parent :: query ($sQuery, $nResultMode);
-                $sUnwanted = ob_get_clean ();
+        public function query($sQuery, $nResultMode = MYSQLI_STORE_RESULT) {
+                ob_start();
+                $mResult = parent::query($sQuery, $nResultMode);
+                $sUnwanted = ob_get_clean();
                 
-                if ($mResult == false)
-                {
-                        /** Yet another error, sigh. **/
-                        ModuleManager :: getInstance () -> offsetGet ('LVPEchoHandler') ->
-                                error (null, LVP :: DEBUG_CHANNEL, 'Executing query failed: ' . $this -> error);
-                        ModuleManager :: getInstance () -> offsetGet ('LVPEchoHandler') ->
-                                error (null, LVP :: DEBUG_CHANNEL, $sUnwanted);
+                if ($mResult == false) {
+                        ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
+                                error(null, LVP :: DEBUG_CHANNEL, 'Executing query failed: ' . $this -> error);
+                        ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
+                                error(null, LVP :: DEBUG_CHANNEL, $sUnwanted);
                 }
                 
                 return $mResult;
@@ -135,8 +125,7 @@ class LVPDatabase extends MySQLi
          * This method will forcibly close the connection of the database, so
          * that a new connection will be made when getInstance () is called.
          */
-        public static function restart ()
-        {
-                self :: $s_pInstance = null; // Force it to close.
+        public static function restart() {
+                self::$s_pInstance = null; // Force it to close.
         }
 }

@@ -71,7 +71,7 @@ class LVPRadioHandler extends LVPEchoHandlerClass
         if ($message == 'Stopping immediately...') {
             $pBot = $this->m_pModule->getBot(LVP::RADIO_CHANNEL);
             $this->m_pModule->info($pBot, LVP::RADIO_CHANNEL,
-                'The autodj is stopping and will reconnect within 60 seconds. Start DJ\'ing now!',
+                'The auto DJ is stopping and will reconnect after 60 seconds. Start DJ\'ing now!',
                 LVPCommand::MODE_IRC);
         }
     }
@@ -83,12 +83,12 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * @param array $names Names of the players with the rights in the defined and executed channel
      */
     public function handleNamesChecking(array $names) {
-        if (!$this -> m_isStopAutoDjCommandExecuting) {
+        if (!$this->m_isStopAutoDjCommandExecuting) {
             return;
         }
 
         foreach ($names as $rightsWithNickname) {
-            if (strpos ($rightsWithNickname, $this -> m_nicknameOfPlayerExecutingStopAutoDjCommand) === false) {
+            if (strpos ($rightsWithNickname, $this->m_nicknameOfPlayerExecutingStopAutoDjCommand) === false) {
                 continue;
             }
 
@@ -98,12 +98,12 @@ class LVPRadioHandler extends LVPEchoHandlerClass
                     $this->m_pModule->privmsg($pBot, self::RADIO_BOT_NAME, '!autodj-force');
                 } else {
                     $this->m_pModule->notice($pBot, LVP::RADIO_CHANNEL,
-                        'The autoDJ is not streaming. Please ask ' . $this->m_currentDjName . ' to stop streaming.',
+                        'The auto DJ is not streaming. Please ask ' . $this->m_currentDjName . ' to stop streaming.',
                         LVPCommand::MODE_IRC);
                 }
             } else {
                 $this->m_pModule->notice($pBot, LVP::RADIO_CHANNEL,
-                    'Only available for voiced users and above', LVPCommand::MODE_IRC);
+                    'Only available for users with at least voice rights.', LVPCommand::MODE_IRC);
             }
         }
 
@@ -119,26 +119,24 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * @param string $message The line written the channel to look up who is DJin, if present.
      */
     public function processChannelMessage ($nickname, $message) {
-        if (strtolower($sNickname) == LVPRadioHandler::RADIO_BOT_NAME) {
-            if ($this->storeDjName($message, ' is off --> Coming up: ') ||
+        if (strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
+            return $this->storeDjName($message, ' is off --> Coming up: ') ||
                 $this->storeDjName($message, '[LVP Radio] Current DJ: ') ||
-                $this->storeDjName($message, 'The current DJ is: ', false)) {
-                return;
+                $this->storeDjName($message, 'The current DJ is: ', false);
+        } else {
+            list($trigger, $params, $splitParams) = Util::parseMessage($message);
+
+            // Here we handle the !stopautodj-cmd. If all the requirements are correct the radiobot should
+            // send the names-command for the radio-channel. On the place where we receive it we actually
+            // process what this command should do.
+            // TODO Future improvement: use the ChannelTracking class.
+            if ($trigger == self::STOPAUTODJ_COMMAND_TRIGGER) {
+                $this->m_isStopAutoDjCommandExecuting = true;
+                $this->m_nicknameOfPlayerExecutingStopAutoDjCommand = $nickname;
+
+                $bot = $this->m_pModule->getBot(LVP::RADIO_CHANNEL);
+                $bot->send('NAMES ' . LVP::RADIO_CHANNEL);
             }
-        }
-
-        list($trigger, $params, $splitParams) = Util::parseMessage($message);
-
-        // Here we handle the !stopautodj-cmd. If all the requirements are correct the radiobot should
-        // send the names-command for the radio-channel. On the place where we receive it we actually
-        // process what this command should do.
-        // TODO Future improvement: use the ChannelTracking class.
-        if ($trigger == self::STOPAUTODJ_COMMAND_TRIGGER) {
-            $this->m_isStopAutoDjCommandExecuting = true;
-            $this->m_nicknameOfPlayerExecutingStopAutoDjCommand = $nickname;
-
-            $bot = $this->m_pModule->getBot(LVP::RADIO_CHANNEL);
-            $bot->send('NAMES ' . LVP::RADIO_CHANNEL);
         }
     }
 
@@ -158,7 +156,7 @@ class LVPRadioHandler extends LVPEchoHandlerClass
             $djName = substr($incomingMessage, $searchPos + strlen($searchString));
 
             if ($omitLastCharacter) {
-                $djName = substr($djName, -1);
+                $djName = substr($djName, 0, -1);
             }
 
             $this->m_currentDjName = $djName;
