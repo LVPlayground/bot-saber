@@ -339,17 +339,17 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $nickname The nickname that joined the channel.
          */
         public function onChannelJoin (Bot $bot, string $channel, string $nickname) {
-            if ($nickname != $bot['Nickname']) {
-                return;
-            }
+                if ($nickname != $bot['Nickname']) {
+                        return;
+                }
 
-            if (strtolower($channel) != LVP::CREW_CHANNEL) {
-                $this ['Commands'] -> handle ($bot, $channel, $nickname, '!updatecrew');
-            }
+                if (strtolower($channel) == LVP::CREW_CHANNEL) {
+                        $this['Commands']->handle($bot, $channel, $nickname, '!updatecrew');
+                }
 
-            if (strtolower($channel) != LVP::RADIO_CHANNEL) {
-                $this->privmsg($bot, LVP::RADIO_CHANNEL, '!dj');
-            }
+                if (strtolower($channel) == LVP::RADIO_CHANNEL) {
+                        $this->privmsg($bot, LVP::RADIO_CHANNEL, '!dj');
+                }
         }
 
         /**
