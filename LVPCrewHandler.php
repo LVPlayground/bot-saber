@@ -119,7 +119,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 );
                 
                 foreach ($aCommands as $sTrigger => $nLevel) {
-                        $this -> m_pModule ['Commands'] -> register (new LVPCommand ($sTrigger, $nLevel, array ($this, 'handleCommands')));
+                        $this->m_pModule['Commands']->register(new LVPCommand($sTrigger, $nLevel, array($this, 'handleCommands')));
                 }
         }
         
@@ -329,10 +329,10 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         public function handleCommands($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
                 switch ($sTrigger) {
                         case '!ingamecrew':
-                                return $this -> handleIngameCrew ($nLevel);
+                                return $this->handleIngameCrew($nLevel);
 
                         case '!updatecrew':
-                                return $this -> handleUpdateCrew ();
+                                return $this->handleUpdateCrew();
                 }
         }
         
@@ -510,10 +510,10 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         }
                         
                         echo ModuleBase::COLOUR_TEAL . '* Undercover' . ModuleBase::CLEAR . ': ';
-                        if (count ($this -> m_aModLogin) == 0) {
+                        if (count ($this->m_aModLogin) == 0) {
                                 echo ModuleBase :: COLOUR_DARKGREY . 'None ';
                         }
-                        else foreach ($this -> m_aModLogin as $sRealname => $sNickname) {
+                        else foreach ($this->m_aModLogin as $sRealname => $sNickname) {
                                 echo $sRealname . ' (as ' . $sNickname . ') ';
                         }
                         
