@@ -14,7 +14,7 @@ class LVP
          * The VIP level is actually a separate switch in the LVP database, and
          * thus not actually a level. But seeing there's a separate VIP channel,
          * and I just use these to differentiate between the channels, I put VIP
-         * above NONE.
+         * after NONE.
          * 
          * @var integer
          */
@@ -26,10 +26,9 @@ class LVP
         const   LEVEL_MANAGEMENT                = 5;
         
         /**
-         * Since LVP is only active on one IRC network, and my bot is likely to
-         * be put to use on other networks as well in the future, we can filter
-         * the messages from other networks as well. This to prevent misuse or
-         * hacking attempts.
+         * Since LVP is only active on one IRC network, and since the bot is
+         * active on other networks as well, we can filter out the messages from
+         * other networks.
          * 
          * @var string
          */
@@ -48,23 +47,10 @@ class LVP
         
         /**
          * It's all about the gameserver. So we're going to need the IP and port
-         * of where the server runs without a doubt. So how could I forget this,
-         * even after 2 weeks of developing? I feel stupid.
+         * of where the server runs without a doubt.
          * 
          * @var string|integer
          */
         const   GAMESERVER_IP                   = 'play.sa-mp.nl';
         const   GAMESERVER_PORT                 = 7777;
-        
-        /**
-         * In order to do something with the LVP Trac, we need to know where to
-         * look for it and the credentials to login with. These are defined
-         * below.
-         * 
-         * @var string
-         */
-        const   TRAC_BASE_URL                   = 'http://trac.sa-mp.nl/lvp';
-        const   TRAC_USERNAME                   = '';
-        const   TRAC_PASSWORD                   = '';
 }
-?>

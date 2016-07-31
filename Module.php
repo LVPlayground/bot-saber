@@ -125,15 +125,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
         private $m_pPlayerManager;
 
         /**
-         * Because we need to login to be able to get any data from the LVP
-         * Trac, we'll assign a specific object to log us in and keep us logged
-         * in, so that we can request data swiftly and painlessly.
-         *
-         * @var LVPTrac
-         */
-        private $m_pTrac;
-
-        /**
          * An old feature of the previous bot were personalized welcome messages
          * when one joined and logged in to the server. This was moderately
          * populair, so I'm bringing it back.
@@ -171,7 +162,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         require 'LVPCrewHandler.php';
                         require 'LVPIpManager.php';
                         require 'LVPPlayerManager.php';
-                        require 'LVPTrac.php';
                         require 'LVPWelcomeMessage.php';
                         require 'LVPRadioHandler.php';
                 }
@@ -232,7 +222,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 $this -> m_pMessageParser       = new LVPEchoMessageParser      ($this);
                 $this -> m_pIpManager           = new LVPIpManager              ($this);
                 $this -> m_pPlayerManager       = new LVPPlayerManager          ($this);
-                $this -> m_pTrac                = new LVPTrac                   ($this);
                 $this -> m_pWelcomeMessage      = new LVPWelcomeMessage         ($this);
                 $this -> m_pRadioHandler        = new LVPRadioHandler           ($this);
 
@@ -510,7 +499,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         case 'cmds':            { return $this -> m_pCommandHandler;    }
                         case 'ip':              { return $this -> m_pIpManager;         }
                         case 'players':         { return $this -> m_pPlayerManager;     }
-                        case 'trac':            { return $this -> m_pTrac;              }
                         case 'welcomemsg':      { return $this -> m_pWelcomeMessage;    }
                         case 'radio':           { return $this -> m_pRadioHandler;      }
                 }
@@ -551,7 +539,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         case 'cmds':            case 'Commands':        { return $this -> m_pCommandHandler;    }
                         case 'ip':              case 'IP':              { return $this -> m_pIpManager;         }
                         case 'players':         case 'Players':         { return $this -> m_pPlayerManager;     }
-                        case 'trac':            case 'Trac':            { return $this -> m_pTrac;              }
                         case 'welcomemsg':      case 'WelcomeMessage':  { return $this -> m_pWelcomeMessage;    }
                         case 'radio':           case 'Radio':           { return $this -> m_pRadioHandler;      }
                 }
@@ -740,4 +727,3 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                 return $this -> privmsg ($pBot, $sDestination, '10* Usage: ' . $sMessage, $nMode);
         }
 }
-?>
