@@ -422,9 +422,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
             && strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
                 // Let the RadioHandler process this private message
                 $this['Radio']->processPrivateMessage($message);
-            } else {
-                // Other network than where LVP is, so we'll bail out.
-                return;
             }
         }
 
@@ -440,9 +437,6 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
             if ($bot['Network'] == LVP::NETWORK && strtolower($channel) == LVP::RADIO_CHANNEL) {
                 // Let the RadioHandler check the names
                 $this['Radio']->handleNamesChecking(explode(' ', $names));
-            } else {
-                // Other network than where LVP is, so we'll bail out.
-                return;
             }
         }
 
