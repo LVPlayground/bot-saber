@@ -670,20 +670,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
                         
                         case self :: TYPE_NICKNAME:
                         {
-                                $sQuery .= 'nickname ';
-                                
-                                if (strpos ($sParams, '*') !== false)
-                                {
-                                        $sQuery .= 'LIKE';
-                                        $sParams = str_replace ('_', '\\_', $sParams);
-                                        $sParams = str_replace ('*', '%', $sParams);
-                                }
-                                else
-                                {
-                                        $sQuery .= '=';
-                                }
-                                $sQuery .= ' "' . $pDatabase -> real_escape_string ($sParams) . '"';
-                                
+                                $sQuery .= 'nickname = "' . $pDatabase -> real_escape_string ($sParams) . '"';
                                 break ;
                         }
                 }
