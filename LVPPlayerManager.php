@@ -4,9 +4,7 @@ require 'LVPPlayer.php';
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPPlayerManager.php 369 2014-01-20 21:53:00Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Countable, IteratorAggregate
 {

@@ -32,9 +32,7 @@ use Nuwani \ Timer;
  * Public commands are available in every LVP channel. Note that this "public"
  * is still limited to LVP channels only.
  *
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- *
- * $Id: Module.php 369 2014-01-20 21:53:00Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPEchoHandler extends ModuleBase implements ArrayAccess
 {

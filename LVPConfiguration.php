@@ -2,9 +2,7 @@
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPConfiguration.php 187 2010-11-27 02:40:21Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 

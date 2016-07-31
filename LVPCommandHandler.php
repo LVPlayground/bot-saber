@@ -6,9 +6,7 @@ use Nuwani \ Bot;
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPCommandHandler.php 51 2010-02-03 23:52:43Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPCommandHandler extends LVPEchoHandlerClass
 {

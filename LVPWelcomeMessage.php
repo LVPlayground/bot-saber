@@ -4,9 +4,7 @@ use Nuwani \ Database;
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPWelcomeMessage.php 127 2010-08-19 00:05:43Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPWelcomeMessage extends LVPEchoHandlerClass
 {

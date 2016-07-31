@@ -4,9 +4,7 @@ use Nuwani \ Bot;
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPEchoMessageParser.php 367 2014-01-11 18:49:01Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPEchoMessageParser extends LVPEchoHandlerClass
 {

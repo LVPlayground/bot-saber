@@ -3,8 +3,6 @@
  * LVPEchoHandler module for Nuwani v2
  *
  * @author Xander Hoogland <home@xanland.nl>
- *
- * LVPRadioHandler.php 2016-07-22 21:17:00Z Xander
  */
 class LVPRadioHandler extends LVPEchoHandlerClass
 {

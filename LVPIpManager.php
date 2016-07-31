@@ -2,9 +2,7 @@
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPIpManager.php 298 2012-11-18 22:30:39Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPIpManager extends LVPEchoHandlerClass
 {

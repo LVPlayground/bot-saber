@@ -2,9 +2,7 @@
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPPlayer.php 348 2013-08-21 21:59:11Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPPlayer implements ArrayAccess, Serializable
 {

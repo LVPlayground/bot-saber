@@ -14,9 +14,7 @@ use Nuwani \ ModuleManager;
  * for some specific functionality.
  * 
  * @author Peter Beverloo <peter@lvp-media.com>
- * @author Dik Grapendaal <dik.grapendaal@gmail.com>
- * 
- * $Id: LVPDatabase.php 296 2012-11-18 22:23:32Z Dik $
+ * @author Dik Grapendaal <dik@sa-mp.nl>
  */
 class LVPDatabase extends MySQLi
 {
