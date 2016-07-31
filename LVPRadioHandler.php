@@ -9,7 +9,12 @@
 class LVPRadioHandler extends LVPEchoHandlerClass
 {
     /**
-     * Keeps track of the autodj is currently running.
+     * The command players use to let the autodj stop running.
+     */
+    const STOPAUTODJ_COMMAND_TRIGGER = '!stopautodj';
+
+    /**
+     * Keeps track of whether the autodj is currently running.
      *
      * @var bool
      */
@@ -21,11 +26,6 @@ class LVPRadioHandler extends LVPEchoHandlerClass
      * @var string
      */
     private $m_currentDjName = null;
-
-    /**
-     * The command players use to let the autodj stop running.
-     */
-    const STOPAUTODJ_COMMAND_TRIGGER = '!stopautodj';
 
     /**
      * The name of the only channel where this handler is valid in.
