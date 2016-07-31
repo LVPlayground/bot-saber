@@ -35,9 +35,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
         public function registerCommands() {
                 $aCommands = array(
                         '!ipinfo'               => LVP::LEVEL_ADMINISTRATOR,
-                        '!ipinfoci'             => LVP::LEVEL_ADMINISTRATOR,
                         '!ipinfoname'           => LVP::LEVEL_ADMINISTRATOR,
-                        '!ipinfonameci'         => LVP::LEVEL_ADMINISTRATOR,
                         
                         '!iplocation'           => LVP::LEVEL_ADMINISTRATOR,
                         '!iploc'                => LVP::LEVEL_ADMINISTRATOR,
@@ -185,9 +183,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
         public function handleCommands ($mainModule, $mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
                 switch ($trigger) {
                         case '!ipinfo':
-                        case '!ipinfoci':
                         case '!ipinfoname':
-                        case '!ipinfonameci':
                                 return $this->handleIpInfo($level, $trigger, $params, $splitParams);
                         
                         case '!iplocation':
@@ -538,6 +534,8 @@ class LVPIpManager extends LVPEchoHandlerClass {
          * @param string $sParams All of the text following the trigger.
          * @param array $aParams Same as above, except split into an array.
          * @return string
+         *
+         * @todo Holy shit, future me, please refactor this. This method is way too loooooooooooooooooooooooooooooooong!
          */
         private function handleIpInfo($nLevel, $sTrigger, $sParams, $aParams) {
                 if ($sParams !== null) {
@@ -551,12 +549,8 @@ class LVPIpManager extends LVPEchoHandlerClass {
                         return LVPCommand::OUTPUT_USAGE;
                 }
                 
-                $bCaseSensitive = true;
                 $bForceName = false;
-                if (strpos($sTrigger, 'ci') !== false) {
-                        $bCaseSensitive = false;
-                }
-                
+
                 if (strpos($sTrigger, 'name') !== false) {
                         $bForceName = true;
                 }
@@ -589,30 +583,26 @@ class LVPIpManager extends LVPEchoHandlerClass {
                 }
                 
                 
-                if ($nLevel < LVP :: LEVEL_MANAGEMENT && ($nType == self :: TYPE_NICKNAME || $nType == self :: TYPE_IP))
-                {
-                        if ($nType == self :: TYPE_NICKNAME)
-                        {
-                                $sTable      = 'samp_address_hide_nickname';
-                                $sField      = 'nickname';
-                                $sBindParam  = 's';
+                if ($nLevel < LVP::LEVEL_MANAGEMENT && ($nType == self::TYPE_NICKNAME || $nType == self::TYPE_IP)) {
+                        if ($nType == self::TYPE_NICKNAME) {
+                                $sTable = 'samp_address_hide_nickname';
+                                $sField = 'nickname';
+                                $sBindParam = 's';
                                 $sQueryParam = $sParams;
                         }
-                        else if ($nType == self :: TYPE_IP)
-                        {
-                                $sTable      = 'samp_address_hide_ip';
-                                $sField      = 'ip_address';
-                                $sBindParam  = 'i';
-                                $sQueryParam = $this -> ip2long ($sParams);
+                        else if ($nType == self::TYPE_IP) {
+                                $sTable = 'samp_address_hide_ip';
+                                $sField = 'ip_address';
+                                $sBindParam = 'i';
+                                $sQueryParam = $this->ip2long($sParams);
                         }
-                        else
-                        {
+                        else {
                                 // ?
                                 echo 'Unknown error occurred.';
-                                return LVPCommand :: OUTPUT_ERROR;
+                                return LVPCommand::OUTPUT_ERROR;
                         }
                         
-                        $pStatement = LVPDatabase :: getInstance () -> prepare (
+                        $pStatement = LVPDatabase::getInstance()->prepare(
                                 'SELECT
                                         display_string
                                 FROM
@@ -620,6 +610,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
                                 WHERE
                                         ' . $sField . ' = ?'
                         );
+
                         if ($pStatement === false)
                         {
                                 echo 'There seems to be a problem with the database. Try again later.';
@@ -679,15 +670,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
                         
                         case self :: TYPE_NICKNAME:
                         {
-                                if ($bCaseSensitive)
-                                {
-                                        $sQuery .= 'nickname ';
-                                }
-                                else
-                                {
-                                        $sQuery .= 'LOWER(nickname) ';
-                                        $sParams = strtolower ($sParams);
-                                }
+                                $sQuery .= 'nickname ';
                                 
                                 if (strpos ($sParams, '*') !== false)
                                 {
@@ -722,7 +705,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
                         
                         $sQuery .= ' AND ' . $sField . ' NOT IN(
                                 SELECT ' . $sField . '
-                                FROM ' . $sTable. '
+                                FROM ' . $sTable . '
                         )';
                 }
                 
@@ -730,9 +713,14 @@ class LVPIpManager extends LVPEchoHandlerClass {
                 
                 switch ($nType)
                 {
-                        case self :: TYPE_IP:
-                        case self :: TYPE_RANGED_IP: $sQuery .= 'nickname';   break;
-                        case self :: TYPE_NICKNAME:  $sQuery .= 'ip_address'; break;
+                        case self::TYPE_IP:
+                        case self::TYPE_RANGED_IP:
+                                $sQuery .= 'nickname';
+                                break;
+
+                        case self::TYPE_NICKNAME:
+                                $sQuery .= 'ip_address';
+                                break;
                 }
                 
                 $sQuery .= 
