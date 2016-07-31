@@ -379,34 +379,33 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
 
                 if (!isset ($this -> m_aLvpChannels [strtolower ($sChannel)]))
                 {
-                        // Not an LVP channel either, but perhaps we are in the radio-channel
-                        if (strtolower ($sNickname) == LVPRadioHandler::RADIO_BOT_NAME
-                            && strtolower($sChannel) == LVP::RADIO_CHANNEL) {
-                            // Let the RadioHandler process this message
-                            $this['Radio']->processChannelMessage($sMessage);
-                        }
+                        // Not an LVP channel either.
+                        return;
+                }
+                else if (strtolower ($sNickname) == LVPRadioHandler::RADIO_BOT_NAME &&
+                        strtolower($sChannel) == LVP::RADIO_CHANNEL) {
+                        // Let the RadioHandler process this message
+                        $this['Radio']->processChannelMessage($sMessage);
                         return;
                 }
 
-                if (in_array ($pBot -> In -> User -> Hostname, $this -> m_aNuwaniInfo ['Hostname']))
-                {
-                        if (strtolower ($sChannel) == LVP :: ECHO_CHANNEL)
-                        {
+
+                if (in_array($pBot->In->User->Hostname, $this->m_aNuwaniInfo['Hostname'])) {
+                        if (strtolower($sChannel) == LVP::ECHO_CHANNEL) {
                                 // A message from a Nuwani bot in the echo channel.
-                                $this ['Parser'] -> parse ($pBot, $sMessage);
+                                $this['Parser']->parse($pBot, $sMessage);
                         }
 
-                        if (substr ($sMessage, 0, 14) == '4Message from')
-                        {
-                                $iColonPos = strpos ($sMessage, chr (3) . ': ');
-                                $sMessage  = substr ($sMessage, $iColonPos + 3);
-                                $sNickname = substr ($sMessage, 15, $iColonPos + 15);
+                        if (substr($sMessage, 0, 14) == '4Message from') {
+                                $iColonPos = strpos($sMessage, chr (3) . ': ');
+                                $sMessage = substr($sMessage, $iColonPos + 3);
+                                $sNickname = substr($sMessage, 15, $iColonPos + 15);
 
                                 // We'll "fall through" to the command handler automatically.
                         }
                 }
 
-                $this ['Commands'] -> handle ($pBot, $sChannel, $sNickname, $sMessage);
+                $this['Commands']->handle($pBot, $sChannel, $sNickname, $sMessage);
         }
 
         /**
@@ -418,8 +417,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
          * @param string $message Message which we received from the user
          */
         public function onPrivmsg (Bot $bot, string $nickname, string $message) {
-            if ($bot['Network'] == LVP::NETWORK
-            && strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
+            if ($bot['Network'] == LVP::NETWORK && strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
                 // Let the RadioHandler process this private message
                 $this['Radio']->processPrivateMessage($message);
             }
