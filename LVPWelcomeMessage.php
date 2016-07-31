@@ -266,4 +266,3 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                 $this -> m_pModule -> privmsg (null, LVP :: ECHO_CHANNEL, '!pm ' . $nId . ' ' . $sMessage);
         }
 }
-?>

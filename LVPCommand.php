@@ -216,4 +216,3 @@ class LVPCommand implements ArrayAccess
                 throw new Exception ("Not supported");
         }
 }
-?>

@@ -140,4 +140,3 @@ class LVPDatabase extends MySQLi
                 self :: $s_pInstance = null; // Force it to close.
         }
 }
-?>

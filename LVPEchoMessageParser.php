@@ -192,11 +192,9 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
              * processed in here as well.
              *
              * From IRC:
-             * "%s (IRC) has granted temp. mod rights to %s (Id:%d)."
              * "%s (IRC) has granted temp. admin rights to %s (Id:%d)."
              * 
              * Gamemode:
-             * "%s (Id:%d) has granted temp. mod rights to %s (Id:%d)."
              * "%s (Id:%d) has granted temp. admin rights to %s (Id:%d)."
              *
              * Unescaped regex:
@@ -204,10 +202,6 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
              */
             if (preg_match('/^([^ ]+) \\((?:I[Dd]:\\d+|IRC)\\) has granted temp\\.? ([^ ]+) rights to ([^ ]+) \\(I[Dd]:\\d+\\)\\.?$/', $sMessage, $matches) > 0) {
                 switch ($matches[2]) {
-                    case 'mod':
-                        $this->m_pModule['Crew']->addTempMod($matches[3], $matches[1]);
-                        return;
-
                     case 'admin':
                         $this->m_pModule['Crew']->addTempAdmin($matches[3], $matches[1]);
                         return;
@@ -221,12 +215,9 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
              * in here as well.
              *
              * From IRC:
-             * "%s (IRC) has taken mod rights from %s (Id:%d)."
              * "%s (IRC) has taken admin rights from %s (Id:%d)."
              * 
              * Gamemode:
-             * "%s (Id:%d) has taken mod rights from %s (Id:%d)."
-             * "%s (Id:%d) has taken their own mod rights."
              * "%s (Id:%d) has taken admin rights from %s (Id:%d)."
              * "%s (Id:%d) has taken their own admin rights."
              *
@@ -235,10 +226,6 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
              */
             if (preg_match('/^([^ ]+) \\((?:I[Dd]:\\d+|IRC)\\) has taken (?:their own |)([^ ]+) rights(?: from ([^ ]+) \\(I[Dd]:\\d+\\)|)\\.?$/', $sMessage, $matches) > 0) {
                 switch ($matches[2]) {
-                    case 'mod':
-                        $this->m_pModule['Crew']->removeMod(isset($matches[3]) ? $matches[3] : $matches[1]);
-                        return;
-
                     case 'admin':
                         $this->m_pModule['Crew']->removeAdmin(isset($matches[3]) ? $matches[3] : $matches[1]);
                         return;
@@ -390,7 +377,6 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                                         (' . $nProfileId . ', NOW(), ' . $nSessionTime . ')');
                 }
                 
-                $this -> m_pModule ['Crew'] -> removeMod ($sNickname);
                 $this -> m_pModule ['Crew'] -> removeAdmin ($sNickname);
                 $this -> m_pModule ['Players'] -> deletePlayer ($nId);
         }
@@ -454,4 +440,3 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                 //$this -> m_pModule -> privmsg ($pBot, LVP :: DEBUG_CHANNEL, '[' . $nId . '] <' . $sNickname . '> ' . $sMessage);
         }
 }
-?>

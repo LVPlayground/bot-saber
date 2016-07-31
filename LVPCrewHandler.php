@@ -52,16 +52,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         private $m_aModLogin;
         
         /**
-         * In the LVP gamemode, it's possible to give players mod rights until
-         * they disconnect or are taken away. We will be keeping track of that
-         * as well, with the person who got mod rights as the key and the giver
-         * as the value.
-         * 
-         * @var array
-         */
-        private $m_aTempMod;
-        
-        /**
          * The same for mod rights applies for admin rights as well. Same
          * structure of the array in here too.
          * 
@@ -77,11 +67,10 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
          * @param array $aCrewColors The colors for every level within the crew.
          */
-        public function __construct (LVPEchoHandler $pEchoHandler, $aCrewColors)
-        {
-                parent :: __construct ($pEchoHandler);
+        public function __construct(LVPEchoHandler $pEchoHandler, $aCrewColors) {
+                parent::__construct($pEchoHandler);
                 
-                $this -> m_aColors = $aCrewColors;
+                $this->m_aColors = $aCrewColors;
                 
                 $this->clearIngameCrew ();
                 $this->registerCommands ();
@@ -93,17 +82,14 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * bot is shutting down. This way, we can restore them all when we
          * return back in service.
          */
-        public function __destruct ()
-        {
+        public function __destruct() {
                 $this->saveState();
         }
 
         public function loadState() {
-            if (file_exists (self::STATE_FILE)) {
-                /** Restore. **/
+            if (file_exists(self::STATE_FILE)) {
                 $data = unserialize(file_get_contents(self::STATE_FILE));
                 $this->m_aModLogin = $data[0];
-                $this->m_aTempMod = $data[1];
                 $this->m_aTempAdmin = $data[2];
                 
                 unlink (self::STATE_FILE);
@@ -117,7 +103,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
         public function saveState() {
             file_put_contents (self::STATE_FILE, serialize (array(
                 $this->m_aModLogin,
-                $this->m_aTempMod,
+                [], // Backwards compatibility, temp mods were here previously
                 $this->m_aTempAdmin
             )));
         }
@@ -126,16 +112,13 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * This method will register the commands this class handles to the
          * LVPCommandHandler.
          */
-        private function registerCommands ()
-        {
-                $aCommands = array
-                (
-                        '!ingamecrew' => LVP :: LEVEL_NONE,
-                        '!updatecrew' => LVP :: LEVEL_ADMINISTRATOR
+        private function registerCommands() {
+                $aCommands = array(
+                        '!ingamecrew' => LVP::LEVEL_NONE,
+                        '!updatecrew' => LVP::LEVEL_ADMINISTRATOR
                 );
                 
-                foreach ($aCommands as $sTrigger => $nLevel)
-                {
+                foreach ($aCommands as $sTrigger => $nLevel) {
                         $this -> m_pModule ['Commands'] -> register (new LVPCommand ($sTrigger, $nLevel, array ($this, 'handleCommands')));
                 }
         }
@@ -145,11 +128,9 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * crew logged in other a different name. This can be done forcibly but
          * preferably automatically when the gamemode is restarted.
          */
-        public function clearIngameCrew ()
-        {
-                $this -> m_aModLogin  = array ();
-                $this -> m_aTempMod   = array ();
-                $this -> m_aTempAdmin = array ();
+        public function clearIngameCrew() {
+                $this->m_aModLogin = array();
+                $this->m_aTempAdmin = array();
         }
         
         /**
@@ -158,11 +139,9 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param integer $nLevel The level we want the color from.
          * @return string
          */
-        public function getLevelColor ($nLevel)
-        {
-                if (isset ($this -> m_aColors [$nLevel]))
-                {
-                        return ModuleBase :: COLOUR . $this -> m_aColors [$nLevel];
+        public function getLevelColor($nLevel) {
+                if (isset($this->m_aColors[$nLevel])) {
+                        return ModuleBase::COLOUR . $this->m_aColors[$nLevel];
                 }
                 
                 return '';
@@ -308,29 +287,26 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * only includes the normal admins and mods, but also the temporary crew
          * as well as undercover crew.
          * 
-         * @param string $sNickname The nickname to check whether he/she is crew.
+         * @param string $nickname The nickname to check whether he/she is crew.
          * @return boolean
          */
-        public function isIngameCrew ($sNickname)
-        {
-                return $this -> isPermanentCrew ($sNickname)       ||
-                       isset ($this -> m_aModLogin  [$sNickname])  ||
-                       isset ($this -> m_aTempMod   [$sNickname])  ||
-                       isset ($this -> m_aTempAdmin [$sNickname]);
+        public function isIngameCrew($nickname) {
+                return $this->isPermanentCrew($nickname) ||
+                       isset ($this->m_aModLogin[$nickname]) ||
+                       isset ($this->m_aTempAdmin[$nickname]);
         }
         
         /**
          * This method return true when the given nickname is part of the
          * permanent crew.
          * 
-         * @param string $sNickname The nickname to check.
+         * @param string $nickname The nickname to check.
          * @return boolean
          */
-        public function isPermanentCrew ($sNickname)
-        {
-                return $this -> checkLevel ($sNickname, LVP :: LEVEL_MANAGEMENT)     ||
-                       $this -> checkLevel ($sNickname, LVP :: LEVEL_ADMINISTRATOR)  ||
-                       $this -> checkLevel ($sNickname, LVP :: LEVEL_DEVELOPER);
+        public function isPermanentCrew($nickname) {
+                return $this->checkLevel($nickname, LVP::LEVEL_MANAGEMENT) ||
+                       $this->checkLevel($nickname, LVP::LEVEL_ADMINISTRATOR) ||
+                       $this->checkLevel($nickname, LVP::LEVEL_DEVELOPER);
         }
         
         /**
@@ -350,12 +326,13 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param array $aParams Same as above, except split into an array.
          * @return integer
          */
-        public function handleCommands ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
-        {
-                switch ($sTrigger)
-                {
-                        case '!ingamecrew':     { return $this -> handleIngameCrew ($nLevel);   }
-                        case '!updatecrew':     { return $this -> handleUpdateCrew ();          }
+        public function handleCommands($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+                switch ($sTrigger) {
+                        case '!ingamecrew':
+                                return $this -> handleIngameCrew ($nLevel);
+
+                        case '!updatecrew':
+                                return $this -> handleUpdateCrew ();
                 }
         }
         
@@ -369,16 +346,14 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param string $sNickname The nickname of the person who's now without admin rights.
          * @param boolean $bFromCommand Whether it was the result of a command or just quiting.
          */
-        public function removeAdmin ($sNickname, $bFromCommand = false)
-        {
-                $bRemoved  = false;
-                $bRemoved |= $this -> removeModLogin ($sNickname, $bFromCommand);
-                $bRemoved |= $this -> removeTempAdmin ($sNickname, $bFromCommand);
+        public function removeAdmin($sNickname, $bFromCommand = false) {
+                $bRemoved = false;
+                $bRemoved |= $this->removeModLogin($sNickname, $bFromCommand);
+                $bRemoved |= $this->removeTempAdmin($sNickname, $bFromCommand);
                 
-                if ($bFromCommand)
-                {
-                        $sNickname = $this -> wrapLevelColorName ($sNickname);
-                        $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sNickname . ' is no longer an administrator.');
+                if ($bFromCommand) {
+                        $sNickname = $this->wrapLevelColorName($sNickname);
+                        $this->m_pModule->info(null, LVP::CREW_CHANNEL, $sNickname . ' is no longer an administrator.');
                 }
         }
         
@@ -390,42 +365,39 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param string $sRealName The name we all know the crew member under.
          * @param integer $nLevel The level of the crew member.
          */
-        public function addModLogin ($sFakeName, $sRealName, $nLevel)
-        {
-                if ($sFakeName == $sRealName)
-                {
-                        /** Yeah, whatever. **/
+        public function addModLogin($sFakeName, $sRealName, $nLevel) {
+                if ($sFakeName == $sRealName) {
+                        // Yeah, whatever.
                         return;
                 }
                 
-                $this -> m_aModLogin [$sRealName] = $sFakeName;
+                $this->m_aModLogin[$sRealName] = $sFakeName;
                 
-                $sMessage = ModuleBase :: BOLD . $sFakeName . ModuleBase :: BOLD . ' has logged in as ' . $this -> wrapLevelColorName ($sRealName);
+                $sMessage = ModuleBase::BOLD . $sFakeName . ModuleBase::BOLD .
+                        ' has logged in as ' . $this -> wrapLevelColorName ($sRealName);
                 
-                $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sMessage . '.');
+                $this->m_pModule->info(null, LVP::CREW_CHANNEL, $sMessage . '.');
                 
-                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sFakeName);
-                if ($pPlayer != null)
-                {
-                        /** Update their profile ID, so that their session time can be recorded in the crew monitor. **/
-                        $db = LVPDatabase :: getInstance ();
-                        $pResult = $db -> query (
+                $pPlayer = $this->m_pModule['Players']->getPlayerByName($sFakeName);
+                if ($pPlayer != null) {
+                        // Update their profile ID, so that their session time can be recorded in the crew monitor.
+                        $db = LVPDatabase::getInstance();
+                        $pResult = $db->query(
                                 'SELECT u.user_id
                                 FROM lvp_mainserver.users_nickname n
                                 LEFT JOIN lvp_mainserver.users u ON u.user_id = n.user_id
                                 LEFT JOIN lvp_mainserver.users_mutable m ON m.user_id = u.user_id
-                                WHERE n.nickname = "' . $db -> real_escape_string ($sRealName) . '"');
+                                WHERE n.nickname = "' . $db->real_escape_string($sRealName) . '"');
                         
-                        if ($pResult !== false && $pResult -> num_rows > 0)
-                        {
-                                list ($nProfileId) = $pResult -> fetch_row ();
+                        if ($pResult !== false && $pResult->num_rows > 0) {
+                                list ($nProfileId) = $pResult->fetch_row();
                                 
-                                $pPlayer -> fetchInformation ($nProfileId);
+                                $pPlayer->fetchInformation($nProfileId);
                                 
-                                $pPlayer ['TempLevel'] = $pPlayer ['Level'];
-                                $pPlayer ['Level'] = 0;
+                                $pPlayer['TempLevel'] = $pPlayer['Level'];
+                                $pPlayer['Level'] = 0;
                                 
-                                $pResult -> free ();
+                                $pResult->free();
                         }
                 }
         }
@@ -439,87 +411,29 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param boolean $bSilent When true, a message will not be sent to the crew channel.
          * @return boolean
          */
-        public function removeModLogin ($sFakeName, $bSilent = false)
-        {
-                foreach ($this -> m_aModLogin as $sRealName => $sIngameName)
-                {
-                        if ($sFakeName == $sIngameName)
-                        {
-                                unset ($this -> m_aModLogin [$sRealName]);
-                                
-                                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sFakeName);
-                                if ($pPlayer != null)
-                                {
-                                        $pPlayer ['TempLevel'] = LVP :: LEVEL_NONE;
-                                }
-                                
-                                if (!$bSilent)
-                                {
-                                        $sRealName = $this -> wrapLevelColorName ($sRealName);
-                                        $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, ModuleBase :: BOLD . $sFakeName . ModuleBase :: BOLD . ' (' . $sRealName . ') is no longer ingame.');
-                                }
-                                
-                                return true;
+        public function removeModLogin($sFakeName, $bSilent = false) {
+                foreach ($this->m_aModLogin as $sRealName => $sIngameName) {
+                        if ($sFakeName != $sIngameName) {
+                                continue;
                         }
+
+                        unset($this->m_aModLogin[$sRealName]);
+                        
+                        $pPlayer = $this->m_pModule['Players']->getPlayerByName($sFakeName);
+                        if ($pPlayer != null) {
+                                $pPlayer['TempLevel'] = LVP::LEVEL_NONE;
+                        }
+                        
+                        if (!$bSilent) {
+                                $sRealName = $this->wrapLevelColorName($sRealName);
+                                $this->m_pModule->info(null, LVP::CREW_CHANNEL, ModuleBase::BOLD . $sFakeName .
+                                        ModuleBase::BOLD . ' (' . $sRealName . ') is no longer ingame.');
+                        }
+                        
+                        return true;
                 }
                 
                 return false;
-        }
-        
-        /**
-         * This method adds the specified name as a temporary ingame
-         * moderator to the internal array.
-         * 
-         * @param string $sTempModName The name of the person who was given temp mod rights.
-         * @param string $sCrewMember The crew member who gave this person the rights.
-         */
-        public function addTempMod ($sTempModName, $sCrewMember)
-        {
-                $this -> m_aTempMod [$sTempModName] = $sCrewMember;
-                
-                $sCrewMember = $this -> wrapLevelColorName ($sCrewMember);
-                $sMessage = ModuleBase :: BOLD . $sTempModName . ModuleBase :: BOLD . ' has been given temporary moderator rights by ' . $sCrewMember;
-                
-                $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sMessage . '.');
-                
-                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sTempModName);
-                if ($pPlayer != null)
-                {
-                        $pPlayer ['TempLevel'] = LVP :: LEVEL_ADMINISTRATOR;
-                }
-        }
-        
-        /**
-         * This method will remove the supplied name as being given mod rights.
-         * It will also check if there's a crew member logged in under a
-         * different name, who's got their rights taken away. If so, we remove
-         * them as being logged in undercover as well.
-         * 
-         * @param string $sTempModName The name who's got their rights taken away.
-         * @param boolean $bSilent When true, a message will not be sent to the crew channel.
-         * @return boolean
-         */
-        public function removeTempMod ($sTempModName, $bSilent = false)
-        {
-                if (!isset ($this -> m_aTempMod [$sTempModName]))
-                {
-                        return false;
-                }
-                unset ($this -> m_aTempMod [$sTempModName]);
-                
-                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sTempModName);
-                if ($pPlayer != null)
-                {
-                        $pPlayer ['TempLevel'] = LVP :: LEVEL_NONE;
-                }
-                
-                if (!$bSilent)
-                {
-                        $sMessage = ModuleBase :: BOLD . $sTempModName . ModuleBase :: BOLD . ' is no longer ingame.';
-                        $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sMessage);
-                }
-                
-                return true;
         }
         
         /**
@@ -529,19 +443,18 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param string $sTempAdminName The name of the person who was given temp admin rights.
          * @param string $sCrewMember The crew member who gave this person the rights.
          */
-        public function addTempAdmin ($sTempAdminName, $sCrewMember)
-        {
-                $this -> m_aTempAdmin [$sTempAdminName] = $sCrewMember;
+        public function addTempAdmin($sTempAdminName, $sCrewMember) {
+                $this->m_aTempAdmin[$sTempAdminName] = $sCrewMember;
                 
-                $sCrewMember = $this -> wrapLevelColorName ($sCrewMember);
-                $sMessage = ModuleBase :: BOLD . $sTempAdminName . ModuleBase :: BOLD . ' has been given temporary administrator rights by ' . $sCrewMember;
+                $sCrewMember = $this->wrapLevelColorName($sCrewMember);
+                $sMessage = ModuleBase::BOLD . $sTempAdminName . ModuleBase::BOLD .
+                        ' has been given temporary administrator rights by ' . $sCrewMember;
                 
-                $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sMessage . '.');
+                $this->m_pModule->info(null, LVP::CREW_CHANNEL, $sMessage . '.');
                 
-                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sTempAdminName);
-                if ($pPlayer != null)
-                {
-                        $pPlayer ['TempLevel'] = LVP :: LEVEL_ADMINISTRATOR;
+                $pPlayer = $this->m_pModule['Players']->getPlayerByName($sTempAdminName);
+                if ($pPlayer != null) {
+                        $pPlayer['TempLevel'] = LVP::LEVEL_ADMINISTRATOR;
                 }
         }
         
@@ -555,24 +468,21 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param boolean $bSilent When true, a message will not be sent to the crew channel.
          * @return boolean
          */
-        public function removeTempAdmin ($sTempAdminName, $bSilent = false)
-        {
-                if (!isset ($this -> m_aTempAdmin [$sTempAdminName]))
-                {
+        public function removeTempAdmin($sTempAdminName, $bSilent = false) {
+                if (!isset($this->m_aTempAdmin[$sTempAdminName])) {
                         return false;
                 }
-                unset ($this -> m_aTempAdmin [$sTempAdminName]);
+
+                unset($this->m_aTempAdmin[$sTempAdminName]);
                 
-                $pPlayer = $this -> m_pModule ['Players'] -> getPlayerByName ($sTempAdminName);
-                if ($pPlayer != null)
-                {
-                        $pPlayer ['TempLevel'] = LVP :: LEVEL_NONE;
+                $pPlayer = $this->m_pModule['Players']->getPlayerByName($sTempAdminName);
+                if ($pPlayer != null) {
+                        $pPlayer['TempLevel'] = LVP::LEVEL_NONE;
                 }
                 
-                if (!$bSilent)
-                {
-                        $sMessage = ModuleBase :: BOLD . $sTempAdminName . ModuleBase :: BOLD . ' is no longer ingame.';
-                        $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, $sMessage);
+                if (!$bSilent) {
+                        $sMessage = ModuleBase::BOLD . $sTempAdminName . ModuleBase::BOLD . ' is no longer ingame.';
+                        $this->m_pModule->info(null, LVP::CREW_CHANNEL, $sMessage);
                 }
                 
                 return true;
@@ -588,38 +498,22 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @param integer $nLevel The level we're operating at.
          * @return string
          */
-        private function handleIngameCrew ($nLevel)
-        {
-                if ($nLevel >= LVP::LEVEL_ADMINISTRATOR)
-                {
+        private function handleIngameCrew($nLevel) {
+                if ($nLevel >= LVP::LEVEL_ADMINISTRATOR) {
                         // Temporary crew.
-                        echo ModuleBase :: COLOUR_TEAL . '* Temp mods' . ModuleBase :: CLEAR . ': ';
-                        if (count ($this -> m_aTempMod) == 0)
-                        {
+                        echo ModuleBase::COLOUR_TEAL . '* Temp admins' . ModuleBase::CLEAR . ': ';
+                        if (count($this->m_aTempAdmin) == 0) {
                                 echo ModuleBase :: COLOUR_DARKGREY . 'None ';
                         }
-                        else foreach ($this -> m_aTempMod as $sNickname => $sCrewMember)
-                        {
+                        else foreach ($this->m_aTempAdmin as $sNickname => $sCrewMember) {
                                 echo $sNickname . ' (by ' . $sCrewMember . ') ';
                         }
                         
-                        echo ModuleBase :: COLOUR_TEAL . '* Temp admins' . ModuleBase :: CLEAR . ': ';
-                        if (count ($this -> m_aTempAdmin) == 0)
-                        {
+                        echo ModuleBase::COLOUR_TEAL . '* Undercover' . ModuleBase::CLEAR . ': ';
+                        if (count ($this -> m_aModLogin) == 0) {
                                 echo ModuleBase :: COLOUR_DARKGREY . 'None ';
                         }
-                        else foreach ($this -> m_aTempAdmin as $sNickname => $sCrewMember)
-                        {
-                                echo $sNickname . ' (by ' . $sCrewMember . ') ';
-                        }
-                        
-                        echo ModuleBase :: COLOUR_TEAL . '* Undercover' . ModuleBase :: CLEAR . ': ';
-                        if (count ($this -> m_aModLogin) == 0)
-                        {
-                                echo ModuleBase :: COLOUR_DARKGREY . 'None ';
-                        }
-                        else foreach ($this -> m_aModLogin as $sRealname => $sNickname)
-                        {
+                        else foreach ($this -> m_aModLogin as $sRealname => $sNickname) {
                                 echo $sRealname . ' (as ' . $sNickname . ') ';
                         }
                         
@@ -627,42 +521,39 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 }
                 
                 // Permanent crew.
-                $aIngameCrew = array ();
-                foreach ($this -> m_pModule -> players as $pPlayer)
-                {
-                        if ($pPlayer ['Level'] >= LVP::LEVEL_ADMINISTRATOR)
-                        {
-                                $aIngameCrew [] = $pPlayer;
+                $aIngameCrew = array();
+                foreach ($this->m_pModule->players as $pPlayer) {
+                        if ($pPlayer['Level'] >= LVP::LEVEL_ADMINISTRATOR) {
+                                $aIngameCrew[] = $pPlayer;
                         }
                 }
                 
-                $nPlayers = count ($this -> m_pModule -> players);
-                if (count ($aIngameCrew) == 0)
-                {
+                $nPlayers = count($this->m_pModule->players);
+                if (count($aIngameCrew) == 0) {
                         echo 'No crew ingame with ' . $nPlayers . ' player' .
                                 ($nPlayers == 1 ? '' : 's') . ' ingame.';
-                }
-                else
-                {
-                        echo ModuleBase :: COLOUR_TEAL . '* Ingame crew' . ModuleBase :: CLEAR .
-                                ' (' . count ($aIngameCrew) . '/' . $nPlayers . '): ';
+                } else {
+                        echo ModuleBase::COLOUR_TEAL . '* Ingame crew' . ModuleBase::CLEAR .
+                                ' (' . count($aIngameCrew) . '/' . $nPlayers . '): ';
                         
                         $bFirst = true;
-                        foreach ($aIngameCrew as $pPlayer)
-                        {
-                                if ($bFirst) $bFirst = false;
-                                else         echo ', ';
+                        foreach ($aIngameCrew as $pPlayer) {
+                                if ($bFirst) {
+                                        $bFirst = false;
+                                } else {
+                                        echo ', ';
+                                }
                                 
-                                $sNickname = $pPlayer ['Nickname'];
+                                $sNickname = $pPlayer['Nickname'];
                                 
-                                $nLevel = $this -> getLevel ($sNickname);
-                                echo $this -> wrapLevelColor ($nLevel, $sNickname);
-                                
+                                $nLevel = $this->getLevel($sNickname);
+
+                                echo $this->wrapLevelColor($nLevel, $sNickname);
                                 echo ' (ID: ' . $pPlayer ['ID'] . ')';
                         }
                 }
                 
-                return LVPCommand :: OUTPUT_NORMAL;
+                return LVPCommand::OUTPUT_NORMAL;
         }
         
         /**
