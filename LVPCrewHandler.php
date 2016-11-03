@@ -371,7 +371,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         return;
                 }
                 
-                $this->m_aModLogin[$sRealName] = $sFakeName;
+                $this->m_aModLogin[$sFakeName] = $sRealName;
                 
                 $sMessage = ModuleBase::BOLD . $sFakeName . ModuleBase::BOLD .
                         ' has logged in as ' . $this -> wrapLevelColorName ($sRealName);
@@ -412,28 +412,24 @@ class LVPCrewHandler extends LVPEchoHandlerClass
          * @return boolean
          */
         public function removeModLogin($sFakeName, $bSilent = false) {
-                foreach ($this->m_aModLogin as $sRealName => $sIngameName) {
-                        if ($sFakeName != $sIngameName) {
-                                continue;
-                        }
+                if (!isset($this->m_aModLogin[$sFakeName])) {
+                        return false;
+                }
 
-                        unset($this->m_aModLogin[$sRealName]);
-                        
-                        $pPlayer = $this->m_pModule['Players']->getPlayerByName($sFakeName);
-                        if ($pPlayer != null) {
-                                $pPlayer['TempLevel'] = LVP::LEVEL_NONE;
-                        }
-                        
-                        if (!$bSilent) {
-                                $sRealName = $this->wrapLevelColorName($sRealName);
-                                $this->m_pModule->info(null, LVP::CREW_CHANNEL, ModuleBase::BOLD . $sFakeName .
-                                        ModuleBase::BOLD . ' (' . $sRealName . ') is no longer ingame.');
-                        }
-                        
-                        return true;
+                unset($this->m_aModLogin[$sFakeName]);
+                
+                $pPlayer = $this->m_pModule['Players']->getPlayerByName($sFakeName);
+                if ($pPlayer != null) {
+                        $pPlayer['TempLevel'] = LVP::LEVEL_NONE;
                 }
                 
-                return false;
+                if (!$bSilent) {
+                        $sRealName = $this->wrapLevelColorName($sRealName);
+                        $this->m_pModule->info(null, LVP::CREW_CHANNEL, ModuleBase::BOLD . $sFakeName .
+                                ModuleBase::BOLD . ' (' . $sRealName . ') is no longer ingame.');
+                }
+                
+                return true;
         }
         
         /**
@@ -513,7 +509,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         if (count ($this->m_aModLogin) == 0) {
                                 echo ModuleBase :: COLOUR_DARKGREY . 'None ';
                         }
-                        else foreach ($this->m_aModLogin as $sRealname => $sNickname) {
+                        else foreach ($this->m_aModLogin as $sNickname => $sRealname) {
                                 echo $sRealname . ' (as ' . $sNickname . ') ';
                         }
                         
@@ -619,5 +615,30 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                 
                 echo substr ($sMessage, 0, -2);
                 return LVPCommand::OUTPUT_SUCCESS;
+        }
+
+        /** 
+         * This method is used to check whether temporary crew or undercover
+         * crew is still ingame. If not, they are unregistered as being ingame
+         * as temporary crew or undercover.
+         */
+        public function syncPlayers() {
+                $playerManager = $this->m_pModule->players;
+
+                $tempCrew = $this->m_aTempAdmin;
+                foreach ($tempCrew as $sNickname => $sCrewMember) {
+                        if ($playerManager->getPlayerByName($sNickname) === null) {
+                                unset($this->m_aTempAdmin[$sNickname]);
+                        }
+                }
+
+                $undercoverCrew = $this->m_aModLogin;
+                foreach ($undercoverCrew as $sNickname => $sRealname) {
+                        if ($playerManager->getPlayerByName($sNickname) === null) {
+                                unset($this->m_aModLogin[$sNickname]);
+                        }
+                }
+
+                return true;
         }
 }

@@ -252,7 +252,7 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
                         '!syncplayers',
                         LVP::LEVEL_ADMINISTRATOR,
                         function ($pModule, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
-                                if ($pModule->players->syncPlayers()) {
+                                if ($pModule->players->syncPlayers() && $pModule->crew->syncPlayers()) {
                                         echo ModuleBase::COLOUR_DARKGREEN . '* Succeeded.';
                                 } else {
                                         echo ModuleBase::COLOUR_RED . '* Failed.';
