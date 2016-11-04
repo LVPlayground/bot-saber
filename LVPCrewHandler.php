@@ -416,6 +416,8 @@ class LVPCrewHandler extends LVPEchoHandlerClass
                         return false;
                 }
 
+                $sRealName = $this->m_aModLogin[$sFakeName];
+
                 unset($this->m_aModLogin[$sFakeName]);
                 
                 $pPlayer = $this->m_pModule['Players']->getPlayerByName($sFakeName);
