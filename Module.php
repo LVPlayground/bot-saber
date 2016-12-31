@@ -34,8 +34,7 @@ use Nuwani\Timer;
  *
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPEchoHandler extends ModuleBase implements ArrayAccess
-{
+class LVPEchoHandler extends ModuleBase implements ArrayAccess {
 
 	/**
 	 * In this array we keep track of all the LVP channels and the levels
@@ -420,10 +419,10 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
 	 * @param string $names Space-seperated string of userrights and the username
 	 */
 	public function onChannelNames (Bot $bot, string $channel, string $names) {
-	    if ($bot['Network'] == LVP::NETWORK && strtolower($channel) == LVP::RADIO_CHANNEL) {
-		// Let the RadioHandler check the names
-		$this['Radio']->handleNamesChecking(explode(' ', $names));
-	    }
+		if ($bot['Network'] == LVP::NETWORK && strtolower($channel) == LVP::RADIO_CHANNEL) {
+			// Let the RadioHandler check the names
+			$this['Radio']->handleNamesChecking(explode(' ', $names));
+		}
 	}
 
 	/**
@@ -477,15 +476,15 @@ class LVPEchoHandler extends ModuleBase implements ArrayAccess
 	 */
 	public function offsetGet($mKey) {
 		switch ($mKey) {
-			case 'db':              case 'Database':        { return LVPDatabase :: getInstance (); }
-			case 'config':          case 'Configuration':   { return $this -> m_pConfiguration;     }
-			case 'crew':            case 'Crew':            { return $this -> m_pCrewHandler;       }
-			case 'parser':          case 'Parser':          { return $this -> m_pMessageParser;     }
-			case 'cmds':            case 'Commands':        { return $this -> m_pCommandHandler;    }
-			case 'ip':              case 'IP':              { return $this -> m_pIpManager;         }
-			case 'players':         case 'Players':         { return $this -> m_pPlayerManager;     }
-			case 'welcomemsg':      case 'WelcomeMessage':  { return $this -> m_pWelcomeMessage;    }
-			case 'radio':           case 'Radio':           { return $this -> m_pRadioHandler;      }
+			case 'db':         case 'Database':       { return LVPDatabase::getInstance(); }
+			case 'config':     case 'Configuration':  { return $this->m_pConfiguration;    }
+			case 'crew':       case 'Crew':           { return $this->m_pCrewHandler;      }
+			case 'parser':     case 'Parser':         { return $this->m_pMessageParser;    }
+			case 'cmds':       case 'Commands':       { return $this->m_pCommandHandler;   }
+			case 'ip':         case 'IP':             { return $this->m_pIpManager;        }
+			case 'players':    case 'Players':        { return $this->m_pPlayerManager;    }
+			case 'welcomemsg': case 'WelcomeMessage': { return $this->m_pWelcomeMessage;   }
+			case 'radio':      case 'Radio':          { return $this->m_pRadioHandler;     }
 		}
 
 		return false;

@@ -1,13 +1,12 @@
 <?php
-use Nuwani \ Database;
+use Nuwani\Database;
 
 /**
  * LVPEchoHandler module for Nuwani v2
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPWelcomeMessage extends LVPEchoHandlerClass
-{
+class LVPWelcomeMessage extends LVPEchoHandlerClass {
         
         /**
          * This property holds the welcome messages for every name that has been
@@ -16,7 +15,7 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * 
          * @var array
          */
-        private $m_aWelcomeMessages = array ();
+        private $m_aWelcomeMessages = array();
         
         /**
          * The constructor will call the parent constructor and prepare some
@@ -24,21 +23,18 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * 
          * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
          */
-        public function __construct (LVPEchoHandler $pEchoHandler)
-        {
-                parent :: __construct ($pEchoHandler);
+        public function __construct(LVPEchoHandler $pEchoHandler) {
+                parent::__construct($pEchoHandler);
                 
-                $this -> load ();
+                $this->load();
         }
         
         /**
          * This method will simply load up the welcome messages, which are not
          * marked as deleted.
          */
-        public function load ()
-        {
-                $pResult = Database :: getInstance () -> query
-                (
+        public function load() {
+                $pResult = Database::getInstance()->query(
                         "SELECT
                                 nickname, welcome_message
                         FROM
@@ -47,14 +43,12 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                                 is_deleted = 0"
                 );
                 
-                if ($pResult === false)
-                {
+                if ($pResult === false) {
                         return;
                 }
                 
-                while (($aRow = $pResult -> fetch_assoc ()) != null)
-                {
-                        $this -> m_aWelcomeMessages [$aRow ['nickname']] = $aRow ['welcome_message'];
+                while (($aRow = $pResult->fetch_assoc()) != null) {
+                        $this->m_aWelcomeMessages[$aRow['nickname']] = $aRow['welcome_message'];
                 }
         }
         
@@ -65,9 +59,8 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sNickname The nickname we want to check.
          * @return boolean
          */
-        public function exists ($sNickname)
-        {
-                return isset ($this -> m_aWelcomeMessages [$sNickname]);
+        public function exists($sNickname) {
+                return isset($this->m_aWelcomeMessages[$sNickname]);
         }
         
         /**
@@ -78,17 +71,14 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sAddedBy The nickname of the person who added the message.
          * @return boolean
          */
-        public function add ($sNickname, $sMessage, $sAddedBy)
-        {
-                if ($this -> exists ($sNickname))
-                {
+        public function add($sNickname, $sMessage, $sAddedBy) {
+                if ($this->exists($sNickname)) {
                         return false;
                 }
                 
-                $this -> m_aWelcomeMessages [$sNickname] = $sNewMessage;
+                $this->m_aWelcomeMessages[$sNickname] = $sNewMessage;
                 
-                $pStatement = Database :: getInstance () -> prepare
-                (
+                $pStatement = Database::getInstance()->prepare(
                         "INSERT INTO samp_welcome_message (
                                 nickname, welcome_message, last_edit_by
                         ) VALUES (
@@ -96,13 +86,12 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                         )"
                 );
                 
-                if ($pStatement === false)
-                {
+                if ($pStatement === false) {
                         return false;
                 }
                 
-                $pStatement -> bind_param ('sss', $sNickname, $sMessage, $sAddedBy);
-                return $pStatement -> execute ();
+                $pStatement->bind_param('sss', $sNickname, $sMessage, $sAddedBy);
+                return $pStatement->execute();
         }
         
         /**
@@ -114,17 +103,14 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sEditedBy The nickname of the person who edited the message.
          * @return boolean
          */
-        public function edit ($sNickname, $sNewMessage, $sEditedBy)
-        {
-                if (!$this -> exists ($sNickname))
-                {
+        public function edit($sNickname, $sNewMessage, $sEditedBy) {
+                if (!$this->exists($sNickname)) {
                         return false;
                 }
                 
-                $this -> m_aWelcomeMessages [$sNickname] = $sNewMessage;
+                $this->m_aWelcomeMessages[$sNickname] = $sNewMessage;
                 
-                $pStatement = Database :: getInstance () -> prepare
-                (
+                $pStatement = Database::getInstance()->prepare(
                         "UPDATE
                                 samp_welcome_message
                         SET
@@ -134,13 +120,12 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                                 nickname = ?"
                 );
                 
-                if ($pStatement === false)
-                {
+                if ($pStatement === false) {
                         return false;
                 }
                 
-                $pStatement -> bind_param ('sss', $sNewMessage, $sEditedBy, $sNickname);
-                return $pStatement -> execute ();
+                $pStatement->bind_param('sss', $sNewMessage, $sEditedBy, $sNickname);
+                return $pStatement->execute();
         }
         
         /**
@@ -153,17 +138,14 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sDeletedBy The nickname of the person who deleted the message.
          * @return boolean
          */
-        public function delete ($sNickname, $sDeletedBy)
-        {
-                if (!$this -> exists ($sNickname))
-                {
+        public function delete($sNickname, $sDeletedBy) {
+                if (!$this->exists($sNickname)) {
                         return false;
                 }
                 
-                unset ($this -> m_aWelcomeMessages [$sNickname]);
+                unset($this->m_aWelcomeMessages[$sNickname]);
                 
-                $pStatement = Database :: getInstance () -> prepare
-                (
+                $pStatement = Database::getInstance()->prepare(
                         "UPDATE
                                 samp_welcome_message
                         SET
@@ -173,13 +155,12 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                                 nickname = ?"
                 );
                 
-                if ($pStatement === false)
-                {
+                if ($pStatement === false) {
                         return false;
                 }
                 
-                $pStatement -> bind_param ('ss', $sDeletedBy, $sNickname);
-                return $pStatement -> execute ();
+                $pStatement->bind_param('ss', $sDeletedBy, $sNickname);
+                return $pStatement->execute();
         }
         
         /**
@@ -190,15 +171,12 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sRestoredBy The nickname of the person who restored it.
          * @return boolean
          */
-        public function restore ($sNickname, $sRestoredBy)
-        {
-                if ($this -> exists ($sNickname))
-                {
+        public function restore($sNickname, $sRestoredBy) {
+                if ($this->exists($sNickname)) {
                         return false;
                 }
                 
-                $pStatement = Database :: getInstance () -> prepare
-                (
+                $pStatement = Database::getInstance()->prepare(
                         "UPDATE
                                 samp_welcome_message
                         SET
@@ -208,22 +186,19 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                                 nickname = ?"
                 );
                 
-                if ($pStatement === false)
-                {
+                if ($pStatement === false) {
                         return false;
                 }
                 
-                $pStatement -> bind_param ('ss', $sRestoredBy, $sNickname);
-                if (!$pStatement -> execute ())
-                {
+                $pStatement->bind_param('ss', $sRestoredBy, $sNickname);
+                if (!$pStatement->execute()) {
                         return false;
                 }
                 
-                $pStatement -> close ();
+                $pStatement->close();
                 
-                $this -> m_aWelcomeMessages [$sNickname] = '';
-                $pStatement = Database :: getInstance () -> prepare
-                (
+                $this->m_aWelcomeMessages[$sNickname] = '';
+                $pStatement = Database::getInstance()->prepare(
                         "SELECT
                                 welcome_message
                         FROM
@@ -231,14 +206,15 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
                         WHERE
                                 nickname = ?"
                 );
-                if ($pStatement === false)
-                {
+
+                if ($pStatement === false) {
                         return false;
                 }
-                $pStatement -> bind_param ('s', $sNickname);
-                $pStatement -> bind_result ($this -> m_aWelcomeMessages [$sNickname]);
-                $pStatement -> execute ();
-                $pStatement -> fetch ();
+
+                $pStatement->bind_param('s', $sNickname);
+                $pStatement->bind_result($this->m_aWelcomeMessages[$sNickname]);
+                $pStatement->execute();
+                $pStatement->fetch();
                 
                 return true;
         }
@@ -251,18 +227,15 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass
          * @param string $sNickname The nickname of the person.
          * @param array $aChunks The complete messsage in chunks.
          */
-        
-        public function handleWelcomeMessage ($nId, $sNickname, $aChunks)
-        {
-                if (!$this -> exists ($sNickname))
-                {
-                        /** No message, no spam. **/
+        public function handleWelcomeMessage($nId, $sNickname, $aChunks) {
+                if (!$this->exists($sNickname)) {
+                        // No message, no spam.
                         return;
                 }
                 
-                $sMessage = $this -> m_aWelcomeMessages [$sNickname];
-                $sMessage = str_replace ('%id', $nId, $sMessage);
+                $sMessage = $this->m_aWelcomeMessages[$sNickname];
+                $sMessage = str_replace('%id', $nId, $sMessage);
                 
-                $this -> m_pModule -> privmsg (null, LVP :: ECHO_CHANNEL, '!pm ' . $nId . ' ' . $sMessage);
+                $this->m_pModule->privmsg(null, LVP::ECHO_CHANNEL, '!pm ' . $nId . ' ' . $sMessage);
         }
 }

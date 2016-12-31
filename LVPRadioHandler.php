@@ -4,8 +4,8 @@
  *
  * @author Xander Hoogland <home@xanland.nl>
  */
-class LVPRadioHandler extends LVPEchoHandlerClass
-{
+class LVPRadioHandler extends LVPEchoHandlerClass {
+    
     /**
      * The command players use to let the autodj stop running.
      */
