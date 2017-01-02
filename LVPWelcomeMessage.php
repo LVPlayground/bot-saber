@@ -6,8 +6,13 @@ use Nuwani\Database;
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPWelcomeMessage extends LVPEchoHandlerClass {
+class LVPWelcomeMessage {
         
+        /**
+         * @var LVPIrcService
+         */
+        private $IrcService;
+
         /**
          * This property holds the welcome messages for every name that has been
          * set up. We do this, so that we don't have to query the database with
@@ -18,13 +23,14 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass {
         private $m_aWelcomeMessages = array();
         
         /**
-         * The constructor will call the parent constructor and prepare some
-         * extra stuff in this class as an added bonus.
+         * The constructor will load up the configured welcome messages. This
+         * class uses the database as configured in the Nuwani framework itself,
+         * not the LVP database.
          * 
-         * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
+         * @param LVPIrcService $ircService
          */
-        public function __construct(LVPEchoHandler $pEchoHandler) {
-                parent::__construct($pEchoHandler);
+        public function __construct(LVPIrcService $ircService) {
+                $this->IrcService = $ircService;
                 
                 $this->load();
         }

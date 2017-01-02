@@ -6,9 +6,14 @@ require 'LVPPlayer.php';
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Countable, IteratorAggregate
+class LVPPlayerManager implements ArrayAccess, Countable, IteratorAggregate
 {
         const STATE_FILE = 'Data/LVP/Players.dat';
+
+        /**
+         * @var LVPDatabase
+         */
+        private $Database;
         
         /**
          * This array keeps track of every player ingame, with only information
@@ -20,14 +25,14 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
         private $m_aPlayers;
         
         /**
-         * The constructor has been overridden to provide functionality of
-         * reloading the players that were serialized from a previous session.
-         * 
-         * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
+         * The constructor will reload the players that were serialized from a
+         * previous session.
+         *
+         * @param LVPDatabase $database
          */
-        public function __construct (LVPEchoHandler $pModule) {
-            parent::__construct($pModule);
-            
+        public function __construct(LVPDatabase $database) {
+            $this->Database = $database;
+
             $this->loadState();
         }
         

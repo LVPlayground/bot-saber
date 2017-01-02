@@ -4,7 +4,7 @@
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
+class LVPConfiguration implements ArrayAccess, LVPCommandRegistrar {
 
 	/**
 	 * The file where all settings are persisted.
@@ -31,21 +31,14 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 	private $m_aDirectiveFilter = array();
 	
 	/**
-	 * The constructor has been overridden to provide functionality of
-	 * loading the settings.
-	 * 
-	 * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
+	 * When constructed, we will be loading the settings.
 	 */
-	public function __construct(LVPEchoHandler $pModule) {
-		parent::__construct($pModule);
-		
+	public function __construct() {
 		if (file_exists(self::PERSISTENCE_FILE_NAME)) {
 			$aLoadedSettings = unserialize(file_get_contents(self::PERSISTENCE_FILE_NAME));
 			$this->m_aConfiguration = $aLoadedSettings[0];
 			$this->m_aDirectiveFilter = $aLoadedSettings[1];
 		}
-		
-		$this->registerCommands();
 	}
 
 	/**
@@ -65,7 +58,7 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 	 * register some commands. Guess what? You'll see that happen in this
 	 * very method.
 	 */
-	private function registerCommands() {
+	public function registerCommands(LVPCommandHandler $commandService) {
 		$aCommands = array(
 			'!lvpset' => LVP::LEVEL_MANAGEMENT,
 			'!lvpget' => LVP::LEVEL_MANAGEMENT,
@@ -73,7 +66,7 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 		);
 		
 		foreach ($aCommands as $sTrigger => $nLevel) {
-			$this->CommandService->register(new LVPCommand(
+			$commandService->register(new LVPCommand(
 				$sTrigger, $nLevel, array ($this, 'handleCommands')
 			));
 		}
@@ -82,7 +75,6 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 	/**
 	 * This method gets invoked as soon as we're expected to execute a command.
 	 * 
-	 * @param LVPCommandHandler $commandService Reference to the command service.
 	 * @param integer $nMode The mode the command is executing in.
 	 * @param integer $nLevel The level we're operating at.
 	 * @param string $sChannel The channel we'll be sending our output to.
@@ -92,7 +84,7 @@ class LVPConfiguration extends LVPEchoHandlerClass implements ArrayAccess {
 	 * @param array $aParams Same as above, except split into an array.
 	 * @return integer
 	 */
-	public function handleCommands($commandService, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+	public function handleCommands($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
 		switch ($sTrigger) {
 			case '!lvpget':
 				return $this->handleDirectiveGet($aParams);

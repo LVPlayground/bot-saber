@@ -7,7 +7,7 @@ use Nuwani\BotManager;
  *
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPIrcService extends LVPEchoHandlerClass {
+class LVPIrcService {
 
 	/**
 	 * In this array we keep track of all the LVP channels and the levels
@@ -15,7 +15,7 @@ class LVPIrcService extends LVPEchoHandlerClass {
 	 *
 	 * @var array
 	 */
-	private $m_aLvpChannels;
+	private $lvpChannels;
 
 	/**
 	 * This method will register a channel as an official LVP channel in
@@ -25,7 +25,17 @@ class LVPIrcService extends LVPEchoHandlerClass {
 	 * @param string $name The actual channel name.
 	 */
 	public function addLvpChannel($level, $name) {
-		$this->m_aLvpChannels[strtolower($name)] = $level;
+		$this->lvpChannels[strtolower($name)] = $level;
+	}
+
+	/**
+	 * Tells us whether the given channel name is an actual LVP channel.
+	 * 
+	 * @param string $channel The channel name to check.
+	 * @return boolean
+	 */
+	public function isLvpChannel($channel) {
+		return isset($this->lvpChannels[strtolower($channel)]);
 	}
 
 	/**
@@ -38,8 +48,8 @@ class LVPIrcService extends LVPEchoHandlerClass {
 	 */
 	public function getChannelLevel($channel) {
 		$channel = strtolower($channel);
-		if (isset($this->m_aLvpChannels[$channel])) {
-			return $this->m_aLvpChannels[$channel];
+		if (isset($this->lvpChannels[$channel])) {
+			return $this->lvpChannels[$channel];
 		}
 
 		return -1;

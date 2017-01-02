@@ -6,9 +6,43 @@ use Nuwani \ Bot;
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPEchoMessageParser extends LVPEchoHandlerClass
+class LVPEchoMessageParser
 {
-        
+        /**
+         * @var LVPConfiguration
+         */
+        private $Configuration;
+
+        /**
+         * @var LVPCommandHandler
+         */
+        private $CommandService;
+
+        /**
+         * @var LVPCrewHandler
+         */
+        private $CrewService;
+
+        /**
+         * @var LVPIpManager
+         */
+        private $IpService;
+
+        /**
+         * @var LVPIrcService
+         */
+        private $IrcService;
+
+        /**
+         * @var LVPPlayerManager
+         */
+        private $PlayerService;
+
+        /**
+         * @var LVPWelcomeMessage
+         */
+        private $WelcomeMessageService;
+
         /**
          * In order to filter Nuwani's output in the echo channel as best as we
          * can, I used something that was called the "shit triggers" in the
@@ -22,27 +56,33 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
         private $m_aIgnoreTriggers;
         
         /**
-         * The constructor has been extended so that we can initialize this
-         * class a bit. At the moment there's only the array which defines what
-         * triggers can be ignored from the Nuwani bots, but I'm sure this is
-         * going to be extended in the future.
          * 
-         * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
+         * @param LVPConfiguration  $configuration         
+         * @param LVPCommandHandler $commandService        
+         * @param LVPCrewHandler    $crewService           
+         * @param LVPIpManager      $ipService             
+         * @param LVPIrcService     $ircService            
+         * @param LVPPlayerManager  $playerService         
+         * @param LVPWelcomeMessage $welcomeMessageService 
          */
-        public function __construct (LVPEchoHandler $pModule)
-        {
-                parent :: __construct ($pModule);
-                
-                $this -> m_aIgnoreTriggers = array
-                (
+        public function __construct(LVPConfiguration $configuration, LVPCommandHandler $commandService, LVPCrewHandler $crewService, LVPIpManager $ipService, LVPIrcService $ircService, LVPPlayerManager $playerService, LVPWelcomeMessage $welcomeMessageService) {
+                $this->Configuration = $configuration;
+                $this->CommandService = $commandService;
+                $this->CrewService = $crewService;
+                $this->IpService = $ipService;
+                $this->IrcService = $ircService;
+                $this->PlayerService = $playerService;
+                $this->WelcomeMessageService = $welcomeMessageService;
+            
+                $this->m_aIgnoreTriggers = array(
                         '7Online', '4Upload', '6***',
                         '6Matches', '4Error:', '4Notice:'
                 );
                 
-                $this -> Configuration -> addDirective ('parser', 'welcomemsg', true, FILTER_VALIDATE_BOOLEAN);
-                $this -> Configuration -> addDirective ('parser', 'reports',    true, FILTER_VALIDATE_BOOLEAN);
+                $this->Configuration->addDirective('parser', 'welcomemsg', true, FILTER_VALIDATE_BOOLEAN);
+                $this->Configuration->addDirective('parser', 'reports',    true, FILTER_VALIDATE_BOOLEAN);
         }
-        
+
         /**
          * What's a parser without a parse method? Exactly, nothing much. So...
          * here it is. This method will happily parse our LVP echo channel
@@ -401,7 +441,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                 $nLevel = $this -> CrewService -> getLevel ($sNickname);
                 $this -> PlayerService -> setPlayerKey ($nId, 'Level', $nLevel);
                 
-                $db = LVPDatabase :: getInstance ();
+                $db = $this->Database;
                 $pResult = $db -> query (
                         'SELECT u.user_id
                         FROM lvp_mainserver.users_nickname n
@@ -436,7 +476,5 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
         {
                 list ($sTrigger, $sParams, $aParams) = Util :: parseMessage ($sMessage);
                 $this -> CommandService -> handleMainChat (LVP :: LEVEL_NONE, $sNickname, $sTrigger, $aParams);
-                
-                //$this -> IrcService -> privmsg ($pBot, LVP :: DEBUG_CHANNEL, '[' . $nId . '] <' . $sNickname . '> ' . $sMessage);
         }
 }

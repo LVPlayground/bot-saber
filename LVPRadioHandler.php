@@ -4,7 +4,7 @@
  *
  * @author Xander Hoogland <home@xanland.nl>
  */
-class LVPRadioHandler extends LVPEchoHandlerClass {
+class LVPRadioHandler {
     
     /**
      * The command players use to let the autodj stop running.
@@ -20,6 +20,11 @@ class LVPRadioHandler extends LVPEchoHandlerClass {
      * Name of the DJ when the autodj is active.
      */
     const AUTO_DJ_NAME = 'lvp_radio';
+
+    /**
+     * @var LVPIrcService
+     */
+    private $IrcService;
 
     /**
      * Keeps track of whether the autodj is currently running.
@@ -57,8 +62,8 @@ class LVPRadioHandler extends LVPEchoHandlerClass {
      *
      * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
       */
-    public function __construct(LVPEchoHandler $pEchoHandler) {
-        parent::__construct($pEchoHandler);
+    public function __construct(LVPIrcService $ircService) {
+        $this->IrcService = $ircService;
     }
 
     /**

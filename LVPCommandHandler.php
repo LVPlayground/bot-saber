@@ -8,7 +8,12 @@ use Nuwani\Bot;
  *
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPCommandHandler extends LVPEchoHandlerClass {
+class LVPCommandHandler {
+
+	/**
+	 * @var LVPIrcService
+	 */
+	private $IrcService;
 
 	/**
 	 * An array with commands indexed by their plain text triggers.
@@ -24,6 +29,14 @@ class LVPCommandHandler extends LVPEchoHandlerClass {
 	 * @var array
 	 */
 	private $m_aRegexCommands = array();
+
+	/**
+	 * Constructor
+	 * @param LVPIrcService $ircService Reference to the IrcService.
+	 */
+	public function __construct(LVPIrcService $ircService) {
+		$this->IrcService = $ircService;
+	}
 
 	/**
 	 * This method allows one to register a new LVPCommand with the handler.
@@ -74,7 +87,7 @@ class LVPCommandHandler extends LVPEchoHandlerClass {
 			return;
 		}
 
-		list($sTrigger, $sParams, $aParams) = Func::parseMessage($sMessage);
+		list($sTrigger, $sParams, $aParams) = Util::parseMessage($sMessage);
 
 		$nLevel = $this->IrcService->getChannelLevel($sChannel);
 
@@ -143,7 +156,7 @@ class LVPCommandHandler extends LVPEchoHandlerClass {
 	 */
 	private function handleCommands($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
 		if (isset($this->m_aTriggerCommands[$sTrigger])) {
-			return $this->m_aTriggerCommands[$sTrigger]($this, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams);
+			return $this->m_aTriggerCommands[$sTrigger]($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams);
 		}
 
 		// Still here, so that means there was no trigger command. On to
@@ -151,7 +164,7 @@ class LVPCommandHandler extends LVPEchoHandlerClass {
 		// have to loop through.
 		foreach ($this->m_aRegexCommands as $sRegex => $pCommand) {
 			if (preg_match($sRegex, $sTrigger)) {
-				return $pCommand($this, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams);
+				return $pCommand($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams);
 			}
 		}
 	}

@@ -4,9 +4,24 @@
  *
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPCrewHandler extends LVPEchoHandlerClass {
+class LVPCrewHandler implements LVPCommandRegistrar {
 
 	const STATE_FILE = 'Data/LVP/IngameCrew.dat';
+
+	/**
+	 * @var LVPDatabase
+	 */
+	private $Database;
+
+	/**
+	 * @var LVPIrcService
+	 */
+	private $IrcService;
+
+	/**
+	 * @var LVPPlayerManager
+	 */
+	private $PlayerService;
 
 	/**
 	 * Because I don't want to hardcode all the colors for the different
@@ -60,21 +75,22 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 	private $m_aTempAdmin;
 
 	/**
-	 * The constructor will call the parent constructor and prepare some
-	 * extra stuff in this class as an added bonus. This includes the level
-	 * colors and initializing the ingamecrew variables.
-	 *
-	 * @param LVPEchoHandler $pEchoHandler The LVPEchoHandler module we're residing in.
-	 * @param array $aCrewColors The colors for every level within the crew.
+	 * The constructor will prepare the level colors and initialize the
+	 * ingamecrew variables.
 	 */
-	public function __construct(LVPEchoHandler $pEchoHandler, $aCrewColors)
+	public function __construct(LVPDatabase $database, LVPIrcService $ircService, LVPPlayerManager $playerService)
 	{
-		parent::__construct($pEchoHandler);
+		$this->Database = $database;
+		$this->IrcService = $ircService;
+		$this->PlayerService = $playerService;
 
-		$this->m_aColors = $aCrewColors;
+		$this->m_aColors = array(
+			LVP::LEVEL_MANAGEMENT    => '03',
+			LVP::LEVEL_ADMINISTRATOR => '04',
+			LVP::LEVEL_DEVELOPER     => '12'
+		);
 
 		$this->clearIngameCrew();
-		$this->registerCommands();
 		$this->loadState();
 	}
 
@@ -116,7 +132,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 	 * This method will register the commands this class handles to the
 	 * LVPCommandHandler.
 	 */
-	private function registerCommands()
+	public function registerCommands(LVPCommandHandler $commandService)
 	{
 		$aCommands = array(
 			'!ingamecrew' => LVP::LEVEL_NONE,
@@ -124,7 +140,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 		);
 
 		foreach ($aCommands as $sTrigger => $nLevel) {
-			$this->CommandService->register(new LVPCommand($sTrigger, $nLevel, array($this, 'handleCommands')));
+			$commandService->register(new LVPCommand($sTrigger, $nLevel, array($this, 'handleCommands')));
 		}
 	}
 
@@ -303,8 +319,8 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 	public function isIngameCrew($nickname)
 	{
 		return $this->isPermanentCrew($nickname) ||
-		isset($this->m_aModLogin[$nickname]) ||
-		isset($this->m_aTempAdmin[$nickname]);
+			isset($this->m_aModLogin[$nickname]) ||
+			isset($this->m_aTempAdmin[$nickname]);
 	}
 
 	/**
@@ -328,7 +344,6 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 	 * the requested information and outputs a message understandable for
 	 * human beings with the information they need.
 	 *
-	 * @param LVPCommandHandler $commandService Reference to the command service.
 	 * @param integer $nMode The mode the command is executing in.
 	 * @param integer $nLevel The level we're operating at.
 	 * @param string $sChannel The channel we'll be sending our output to.
@@ -338,7 +353,7 @@ class LVPCrewHandler extends LVPEchoHandlerClass {
 	 * @param array $aParams Same as above, except split into an array.
 	 * @return integer
 	 */
-	public function handleCommands($commandService, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
+	public function handleCommands($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams)
 	{
 		switch ($sTrigger) {
 			case '!ingamecrew':

@@ -4,7 +4,7 @@
  * 
  * @author Dik Grapendaal <dik@sa-mp.nl>
  */
-class LVPIpManager extends LVPEchoHandlerClass {
+class LVPIpManager implements LVPCommandRegistrar {
 	
 	/**
 	 * These constants are used to differentiate between nicknames and IPs
@@ -15,24 +15,30 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	const TYPE_IP = 1;
 	const TYPE_RANGED_IP = 2;
 	const TYPE_NICKNAME = 3;
+
+	/**
+	 * @var LVPDatabase
+	 */
+	private $Database;
+
+	/**
+	 * @var LVPPlayerManager
+	 */
+	private $PlayerService;
 	
 	/**
-	 * The constructor has been overridden so that we can register our
-	 * commands with the command handler as soon as we fire up.
 	 * 
-	 * @param LVPEchoHandler $pModule The LVPEchoHandler module we're residing in.
 	 */
-	public function __construct(LVPEchoHandler $pModule) {
-		parent::__construct($pModule);
-		
-		$this->registerCommands();
+	public function __construct(LVPDatabase $database, LVPPlayerManager $playerService) {
+		$this->Database = $database;
+		$this->PlayerService = $playerService;
 	}
 	
 	/**
 	 * This method will register all the commands handled by this class to
 	 * the LVPCommandHandler.
 	 */
-	public function registerCommands() {
+	public function registerCommands(LVPCommandHandler $commandService) {
 		$aCommands = array(
 			'!ipinfo'       => LVP::LEVEL_ADMINISTRATOR,
 			'!ipinfoname'   => LVP::LEVEL_ADMINISTRATOR,
@@ -49,7 +55,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 		);
 		
 		foreach ($aCommands as $sTrigger => $nLevel) {
-			$this->CommandService->register(new LVPCommand(
+			$commandService->register(new LVPCommand(
 				$sTrigger,
 				$nLevel,
 				array($this, 'handleCommands')
@@ -161,7 +167,6 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	 * the requested information and outputs a message understandable for
 	 * human beings with the information they need.
 	 * 
-	 * @param LVPCommandHandler $commandService Reference to the command service.
 	 * @param integer $mode The mode the command is executing in.
 	 * @param integer $level The level we're operating at.
 	 * @param string $channel The channel we'll be sending our output to.
@@ -171,7 +176,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	 * @param array $splitParams Same as above, except split into an array.
 	 * @return string
 	 */
-	public function handleCommands($commandService, $mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
+	public function handleCommands($mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
 		switch ($trigger) {
 			case '!ipinfo':
 			case '!ipinfoname':

@@ -157,12 +157,13 @@ class LVPEchoHandler extends ModuleBase {
 			// Our own stuff
 			require 'LVP.php';
 			require 'LVPDatabase.php';
-			require 'LVPEchoHandlerClass.php';
+			require 'LVPCommandRegistrar.php';
 			require 'LVPEchoMessageParser.php';
 			require 'LVPConfiguration.php';
 			require 'LVPCommandHandler.php';
 			require 'LVPCrewHandler.php';
 			require 'LVPIpManager.php';
+			require 'LVPIrcService.php';
 			require 'LVPPlayerManager.php';
 			require 'LVPWelcomeMessage.php';
 			require 'LVPRadioHandler.php';
@@ -171,6 +172,26 @@ class LVPEchoHandler extends ModuleBase {
 		if (!is_dir('Data/LVP')) {
 			mkdir('Data/LVP', 0777);
 		}
+
+		$this->m_pDatabase		 = new LVPDatabase();
+		$this->IrcService		 = new LVPIrcService();
+		$this->m_pCommandHandler = new LVPCommandHandler($this->IrcService);
+		$this->m_pConfiguration  = new LVPConfiguration();
+		$this->m_pPlayerManager  = new LVPPlayerManager($this->m_pDatabase);
+		$this->m_pCrewHandler    = new LVPCrewHandler($this->m_pDatabase, $this->IrcService, $this->m_pPlayerManager);
+		$this->m_pIpManager      = new LVPIpManager($this->m_pDatabase, $this->m_pPlayerManager);
+		$this->m_pWelcomeMessage = new LVPWelcomeMessage($this->IrcService);
+		$this->m_pMessageParser  = new LVPEchoMessageParser($this->m_pConfiguration,
+			$this->m_pCommandHandler, $this->m_pCrewHandler, $this->m_pIpManager,
+			$this->IrcService, $this->m_pPlayerManager, $this->m_pWelcomeMessage);
+		$this->m_pRadioHandler   = new LVPRadioHandler($this->IrcService);
+
+		// Ping the database connection every 30 seconds. Reconnect if needed.
+		$this->m_nDatabaseTimerId = Timer::create(
+			array($this, 'pingDatabase'),
+			30000,
+			Timer::INTERVAL
+		);
 
 		$this->setNuwaniInfo(
 			array(
@@ -197,30 +218,6 @@ class LVPEchoHandler extends ModuleBase {
 			$this->IrcService->addLvpChannel($level, $channel);
 		}
 
-		$aCrewColors = array(
-			LVP::LEVEL_MANAGEMENT    => '03',
-			LVP::LEVEL_ADMINISTRATOR => '04',
-			LVP::LEVEL_DEVELOPER     => '12'
-		);
-
-		$this->m_pDatabase		 = new LVPDatabase();
-		$this->m_pCommandHandler = new LVPCommandHandler($this);
-		$this->m_pConfiguration  = new LVPConfiguration($this);
-		$this->m_pCrewHandler    = new LVPCrewHandler($this, $aCrewColors);
-		$this->m_pMessageParser  = new LVPEchoMessageParser($this);
-		$this->m_pIpManager      = new LVPIpManager($this);
-		$this->m_pPlayerManager  = new LVPPlayerManager($this);
-		$this->m_pWelcomeMessage = new LVPWelcomeMessage($this);
-		$this->m_pRadioHandler   = new LVPRadioHandler($this);
-		$this->IrcService		 = new LVPIrcService($this);
-
-		// Ping the database connection every 30 seconds. Reconnect if needed.
-		$this->m_nDatabaseTimerId = Timer::create(
-			array($this, 'pingDatabase'),
-			30000,
-			Timer::INTERVAL
-		);
-
 		$this->registerCommands();
 	}
 
@@ -230,16 +227,20 @@ class LVPEchoHandler extends ModuleBase {
 	 * functions in PHP.
 	 */
 	public function registerCommands() {
+		$this->m_pConfiguration->registerCommands($this->m_pCommandHandler);
+		$this->m_pCrewHandler->registerCommands($this->m_pCommandHandler);
+		$this->m_pIpManager->registerCommands($this->m_pCommandHandler);
+
 		$this->CommandService->register(new LVPCommand(
 			'!ses',
 			LVP::LEVEL_ADMINISTRATOR,
-			function ($commandService, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+			function ($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
 				if ($sParams == null || !is_numeric($aParams[0])) {
 					echo $sTrigger . ' ID';
 					return LVPCommand::OUTPUT_USAGE;
 				}
 
-				$pPlayer = $commandService->PlayerService->getPlayer($aParams[0]);
+				$pPlayer = $this->PlayerService->getPlayer($aParams[0]);
 				if ($pPlayer == null) {
 					echo 'ID not found.';
 					return LVPCommand::OUTPUT_ERROR;
@@ -250,15 +251,15 @@ class LVPEchoHandler extends ModuleBase {
 						$pPlayer['Nickname'] . '"' . ModuleBase::CLEAR . ': ';
 				}
 
-				echo Func::formatTime(time() - $pPlayer['JoinTime']);
+				echo Util::formatTime(time() - $pPlayer['JoinTime']);
 			}
 		));
 
 		$this->CommandService->register(new LVPCommand(
 			'!syncplayers',
 			LVP::LEVEL_ADMINISTRATOR,
-			function ($commandService, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
-				if ($commandService->PlayerService->syncPlayers() && $commandService->CrewService->syncPlayers()) {
+			function ($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+				if ($this->PlayerService->syncPlayers() && $this->CrewService->syncPlayers()) {
 					echo ModuleBase::COLOUR_DARKGREEN . '* Succeeded.';
 				} else {
 					echo ModuleBase::COLOUR_RED . '* Failed.';
@@ -269,9 +270,9 @@ class LVPEchoHandler extends ModuleBase {
 		$this->CommandService->register(new LVPCommand(
 			'!lvpdumpstate',
 			LVP::LEVEL_MANAGEMENT,
-			function ($commandService, $nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
-				$commandService->PlayerService->saveState();
-				$commandService->CrewService->saveState();
+			function ($nMode, $nLevel, $sChannel, $sNickname, $sTrigger, $sParams, $aParams) {
+				$this->PlayerService->saveState();
+				$this->CrewService->saveState();
 				echo ModuleBase::COLOUR_DARKGREEN . '* Done.';
 			}
 		));
@@ -329,6 +330,7 @@ class LVPEchoHandler extends ModuleBase {
 		}
 
 		if (strtolower($channel) == LVP::CREW_CHANNEL) {
+			// TODO Nice hardcoding of our own command name there mate. Do this properly.
 			$this->CommandService->handle($bot, $channel, $nickname, '!updatecrew');
 		}
 
@@ -362,7 +364,7 @@ class LVPEchoHandler extends ModuleBase {
 
 		$lowerChannel = strtolower($sChannel);
 
-		if (!isset($this->m_aLvpChannels[$lowerChannel])) {
+		if (!$this->IrcService->isLvpChannel($sChannel)) {
 			if ($lowerChannel == LVP::RADIO_CHANNEL) {
 				// Let the RadioHandler process this message
 				$this->RadioService->processChannelMessage($sNickname, $sMessage);
@@ -397,7 +399,7 @@ class LVPEchoHandler extends ModuleBase {
 	 * @param string $nickname Nickname of the user who send the message privately
 	 * @param string $message Message which we received from the user
 	 */
-	public function onPrivmsg (Bot $bot, string $nickname, string $message) {
+	public function onPrivmsg(Bot $bot, string $nickname, string $message) {
 		if ($bot['Network'] == LVP::NETWORK && strtolower($nickname) == LVPRadioHandler::RADIO_BOT_NAME) {
 			// Let the RadioHandler process this private message
 			$this->RadioService->processPrivateMessage($message);
@@ -412,7 +414,7 @@ class LVPEchoHandler extends ModuleBase {
 	 * @param string $channel Name of the channel where names are received from
 	 * @param string $names Space-seperated string of userrights and the username
 	 */
-	public function onChannelNames (Bot $bot, string $channel, string $names) {
+	public function onChannelNames(Bot $bot, string $channel, string $names) {
 		if ($bot['Network'] == LVP::NETWORK && strtolower($channel) == LVP::RADIO_CHANNEL) {
 			// Let the RadioHandler check the names
 			$this->RadioService->handleNamesChecking(explode(' ', $names));

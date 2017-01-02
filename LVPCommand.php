@@ -89,14 +89,7 @@ class LVPCommand {
 		$this->m_nLevel   = $level;
 
 		if (!is_callable($code)) {
-			if (is_array($code)) {
-				throw new Exception('Invalid callback supplied for command "' . $trigger . '".');
-			} else {
-				$code = create_function('$sChannel, $sNickname, $sTrigger, $sParams, $aParams', $code);
-				if ($code === false) {
-					throw new Exception('Could not create function from the given code.');
-				}
-			}
+			throw new Exception('Invalid callback supplied for command "' . $trigger . '".');
 		}
 
 		$this->m_cCommand = $code;
@@ -136,7 +129,6 @@ class LVPCommand {
 	 * kind of message we got back, so we can use the standard wrapper
 	 * methods back in the module.
 	 *
-	 * @param LVPCommandHandler $service Reference to the command service.
 	 * @param integer $outputMode The mode the command is executing in.
 	 * @param integer $level The level we're operating at.
 	 * @param string $channel The channel we're executing in.
@@ -146,14 +138,14 @@ class LVPCommand {
 	 * @param array $arrayParams All the params in an array, split by spaces.
 	 * @return string
 	 */
-	public function __invoke(LVPCommandHandler $service, $outputMode, $level, $channel, $nickname, $trigger, $params, $arrayParams) {
+	public function __invoke($outputMode, $level, $channel, $nickname, $trigger, $params, $arrayParams) {
 		if ($this->m_nLevel > $level) {
 			throw new Exception("This command can only be executed with level " . $this->m_nLevel . " or higher.");
 		}
 
 		ob_start();
 
-		$output = call_user_func($this->m_cCommand, $service, $outputMode, $level, $channel, $nickname, $trigger, $params, $arrayParams);
+		$output = call_user_func($this->m_cCommand, $outputMode, $level, $channel, $nickname, $trigger, $params, $arrayParams);
 
 		if ($output == null) {
 			$output = self::OUTPUT_NORMAL;
