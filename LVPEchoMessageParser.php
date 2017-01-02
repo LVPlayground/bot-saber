@@ -39,8 +39,8 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                         '6Matches', '4Error:', '4Notice:'
                 );
                 
-                $this -> m_pModule -> config -> addDirective ('parser', 'welcomemsg', true, FILTER_VALIDATE_BOOLEAN);
-                $this -> m_pModule -> config -> addDirective ('parser', 'reports',    true, FILTER_VALIDATE_BOOLEAN);
+                $this -> Configuration -> addDirective ('parser', 'welcomemsg', true, FILTER_VALIDATE_BOOLEAN);
+                $this -> Configuration -> addDirective ('parser', 'reports',    true, FILTER_VALIDATE_BOOLEAN);
         }
         
         /**
@@ -179,7 +179,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                     $nLevel = LVP :: LEVEL_ADMINISTRATOR;
                 }
                 
-                $this -> m_pModule ['Crew'] -> addModLogin ($aChunks [1], $aChunks [7], $nLevel);
+                $this -> CrewService -> addModLogin ($aChunks [1], $aChunks [7], $nLevel);
                 
                 // And done.
                 return ;
@@ -203,7 +203,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
             if (preg_match('/^([^ ]+) \\((?:I[Dd]:\\d+|IRC)\\) has granted temp\\.? ([^ ]+) rights to ([^ ]+) \\(I[Dd]:\\d+\\)\\.?$/', $sMessage, $matches) > 0) {
                 switch ($matches[2]) {
                     case 'admin':
-                        $this->m_pModule['Crew']->addTempAdmin($matches[3], $matches[1]);
+                        $this->CrewService->addTempAdmin($matches[3], $matches[1]);
                         return;
                 }
             }
@@ -227,7 +227,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
             if (preg_match('/^([^ ]+) \\((?:I[Dd]:\\d+|IRC)\\) has taken (?:their own |)([^ ]+) rights(?: from ([^ ]+) \\(I[Dd]:\\d+\\)|)\\.?$/', $sMessage, $matches) > 0) {
                 switch ($matches[2]) {
                     case 'admin':
-                        $this->m_pModule['Crew']->removeAdmin(isset($matches[3]) ? $matches[3] : $matches[1]);
+                        $this->CrewService->removeAdmin(isset($matches[3]) ? $matches[3] : $matches[1]);
                         return;
                 }
             }
@@ -246,7 +246,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
         {
                 $nId = (int) substr ($aChunks [3], 4, -3);
                 
-                if ($nId == 255 || $this -> m_pModule ['Crew'] -> isIngameCrew ($sNickname))
+                if ($nId == 255 || $this -> CrewService -> isIngameCrew ($sNickname))
                 {
                         $aChatChunks = array_slice ($aChunks, 4);
                         $sTrigger    = array_shift ($aChatChunks);
@@ -255,25 +255,25 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                         {
                                 if ($nId != 255)
                                 {
-                                        $nLevel = $this -> m_pModule ['Crew'] -> getLevel ($sNickname);
+                                        $nLevel = $this -> CrewService -> getLevel ($sNickname);
                                 }
                                 else
                                 {
                                         $nLevel = LVP :: LEVEL_ADMINISTRATOR;
                                 }
                                 
-                                $this -> m_pModule ['Commands'] -> handleCrewChat ($nLevel, $sNickname, $sTrigger, $aChatChunks);
+                                $this -> CommandService -> handleCrewChat ($nLevel, $sNickname, $sTrigger, $aChatChunks);
                         }
                 }
                 else
                 {
                         /** The person talking is not crew, maybe a report? **/
-                        if (!$this -> m_pModule ['Players'] -> isCrewIngame ())
+                        if (!$this -> PlayerService -> isCrewIngame ())
                         {
                                 /** There's no crew ingame either, this must be a report then. **/
-                                if ($this -> m_pModule -> config -> getDirective ('parser', 'reports'))
+                                if ($this -> Configuration -> getDirective ('parser', 'reports'))
                                 {
-                                        $this -> m_pModule -> privmsg ($pBot, LVP :: CREW_CHANNEL,
+                                        $this -> IrcService -> privmsg ($pBot, LVP :: CREW_CHANNEL,
                                                 ModuleBase::COLOUR_ORANGE . '* Report by ' . $sNickname . ' (ID:' . $nId . ')'
                                                 . ModuleBase::CLEAR . ': ' . $sMessage);
                                 }
@@ -288,10 +288,10 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
          */
         private function handleGamemodeInit ()
         {
-                $this -> m_pModule -> info (null, LVP :: CREW_CHANNEL, 'Everything reset due to gamemode restart.');
+                $this -> IrcService -> info (null, LVP :: CREW_CHANNEL, 'Everything reset due to gamemode restart.');
                 
-                $this -> m_pModule ['Crew'] -> clearIngameCrew ();
-                $this -> m_pModule ['Players'] -> clearPlayers ();
+                $this -> CrewService -> clearIngameCrew ();
+                $this -> PlayerService -> clearPlayers ();
         }
         
         /**
@@ -307,7 +307,7 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
          */
         private function handleIpMessage (Bot $pBot, $nId, $sNickname, $sIp, $aChunks)
         {
-                $this -> m_pModule ['Players'] -> setPlayerKey ($nId, 'IP', $sIp);
+                $this -> PlayerService -> setPlayerKey ($nId, 'IP', $sIp);
                 
                 if (defined ('DEBUG_MODE') && DEBUG_MODE)
                 {
@@ -315,20 +315,20 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                         return ;
                 }
                 
-                $bResult = $this -> m_pModule ['IP'] -> insertIp ($sNickname, $sIp);
+                $bResult = $this -> IpService -> insertIp ($sNickname, $sIp);
                 if (!$bResult)
                 {
-                        $this -> m_pModule -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '": Trying again with a new connection...');
+                        $this -> IrcService -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '": Trying again with a new connection...');
                         LVPDatabase :: restart ();
                         
-                        $bResult = $this -> m_pModule ['IP'] -> insertIp ($sNickname, $sIp);
+                        $bResult = $this -> IpService -> insertIp ($sNickname, $sIp);
                         if ($bResult)
                         {
-                                $this -> m_pModule -> success ($pBot, LVP :: DEBUG_CHANNEL, 'Saved IP address "' . $sIp . '".');
+                                $this -> IrcService -> success ($pBot, LVP :: DEBUG_CHANNEL, 'Saved IP address "' . $sIp . '".');
                         }
                         else
                         {
-                                $this -> m_pModule -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '" with nickname "' . $sNickname . '".');
+                                $this -> IrcService -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '" with nickname "' . $sNickname . '".');
                         }
                 }
         }
@@ -345,8 +345,8 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
          */
         private function handleJoinGame (Bot $pBot, $nId, $sNickname, $aChunks)
         {
-                $this -> m_pModule ['Players'] -> setPlayerKey ($nId, 'Nickname', $sNickname);
-                $this -> m_pModule ['Players'] -> setPlayerKey ($nId, 'JoinTime', time ());
+                $this -> PlayerService -> setPlayerKey ($nId, 'Nickname', $sNickname);
+                $this -> PlayerService -> setPlayerKey ($nId, 'JoinTime', time ());
         }
         
         /**
@@ -362,11 +362,11 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
          */
         private function handleLeaveGame (Bot $pBot, $nId, $sNickname, $sReason, $aChunks)
         {
-                $nProfileId = $this -> m_pModule ['Players'] -> getPlayerKey ($nId, 'ProfileID');
+                $nProfileId = $this -> PlayerService -> getPlayerKey ($nId, 'ProfileID');
                 if ($nProfileId > 0)
                 {
                         /** Save session time for this registered player. **/
-                        $nJoinTime = $this -> m_pModule ['Players'] -> getPlayerKey ($nId, 'JoinTime');
+                        $nJoinTime = $this -> PlayerService -> getPlayerKey ($nId, 'JoinTime');
                         $nSessionTime = time () - $nJoinTime;
                         
                         $db = LVPDatabase :: getInstance ();
@@ -377,8 +377,8 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                                         (' . $nProfileId . ', NOW(), ' . $nSessionTime . ')');
                 }
                 
-                $this -> m_pModule ['Crew'] -> removeAdmin ($sNickname);
-                $this -> m_pModule ['Players'] -> deletePlayer ($nId);
+                $this -> CrewService -> removeAdmin ($sNickname);
+                $this -> PlayerService -> deletePlayer ($nId);
         }
         
         /**
@@ -396,10 +396,10 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
          */
         private function handleLoggedIn (Bot $pBot, $nId, $sNickname, $aChunks)
         {
-                $this -> m_pModule ['Players'] -> setPlayerKey ($nId, 'LogInTime', time ());
+                $this -> PlayerService -> setPlayerKey ($nId, 'LogInTime', time ());
                 
-                $nLevel = $this -> m_pModule ['Crew'] -> getLevel ($sNickname);
-                $this -> m_pModule ['Players'] -> setPlayerKey ($nId, 'Level', $nLevel);
+                $nLevel = $this -> CrewService -> getLevel ($sNickname);
+                $this -> PlayerService -> setPlayerKey ($nId, 'Level', $nLevel);
                 
                 $db = LVPDatabase :: getInstance ();
                 $pResult = $db -> query (
@@ -412,13 +412,13 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
                 if ($pResult !== false && $pResult -> num_rows > 0)
                 {
                         list ($nProfileId) = $pResult -> fetch_row ();
-                        $this -> m_pModule -> players [$nId] -> fetchInformation ($nProfileId);
+                        $this -> PlayerService[$nId] -> fetchInformation ($nProfileId);
                         $pResult -> free ();
                 }
                 
-                if ($this -> m_pModule -> config -> getDirective ('parser', 'welcomemsg'))
+                if ($this -> Configuration -> getDirective ('parser', 'welcomemsg'))
                 {
-                        $this -> m_pModule -> welcomemsg -> handleWelcomeMessage ($nId, $sNickname, $aChunks);
+                        $this -> WelcomeMessageService -> handleWelcomeMessage ($nId, $sNickname, $aChunks);
                 }
         }
         
@@ -435,8 +435,8 @@ class LVPEchoMessageParser extends LVPEchoHandlerClass
         private function handleMainChatMessage (Bot $pBot, $nId, $sNickname, $sMessage, $aChunks)
         {
                 list ($sTrigger, $sParams, $aParams) = Util :: parseMessage ($sMessage);
-                $this -> m_pModule ['Commands'] -> handleMainChat (LVP :: LEVEL_NONE, $sNickname, $sTrigger, $aParams);
+                $this -> CommandService -> handleMainChat (LVP :: LEVEL_NONE, $sNickname, $sTrigger, $aParams);
                 
-                //$this -> m_pModule -> privmsg ($pBot, LVP :: DEBUG_CHANNEL, '[' . $nId . '] <' . $sNickname . '> ' . $sMessage);
+                //$this -> IrcService -> privmsg ($pBot, LVP :: DEBUG_CHANNEL, '[' . $nId . '] <' . $sNickname . '> ' . $sMessage);
         }
 }

@@ -149,20 +149,20 @@ class LVPPlayer implements ArrayAccess, Serializable {
 	 * in some variable until it's needed. At the moment this method only
 	 * fetches the crew status of a user.
 	 *
-	 * @param integer $nProfileId The unique ID of the user in the database.
+	 * @param LVPDatabase $database Reference to the database connection.
+	 * @param integer $profileId The unique ID of the user in the database.
 	 * @return boolean
 	 */
-	public function fetchInformation($nProfileId) {
-		$this->m_nProfileId = $nProfileId;
+	public function fetchInformation($database, $profileId) {
+		$this->m_nProfileId = $profileId;
 
-		$db      = LVPDatabase::getInstance();
-		$pResult = $db->query(
+		$pResult = $database->query(
 			'SELECT
 				u.level, u.is_developer
 			FROM
 				lvp_mainserver.users u
 			WHERE
-				u.user_id = ' . (int) $nProfileId);
+				u.user_id = ' . (int) $profileId);
 
 		if ($pResult !== false && $pResult->num_rows != 0) {
 			$aInformation = $pResult->fetch_assoc();

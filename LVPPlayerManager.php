@@ -110,7 +110,7 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
                         return false;
                 }
                 
-                $db = LVPDatabase :: getInstance ();
+                $db = $this->Database;
 
                 $oldPlayers = $this->m_aPlayers;
 
@@ -146,7 +146,7 @@ class LVPPlayerManager extends LVPEchoHandlerClass implements ArrayAccess, Count
                                 {
                                         list ($nProfileId) = $pResult -> fetch_row ();
                                         $pResult -> free ();
-                                        $this -> getPlayer ($nId) -> fetchInformation ($nProfileId);
+                                        $this -> getPlayer ($nId) -> fetchInformation ($db, $nProfileId);
                                 }
                         }
                 }

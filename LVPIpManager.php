@@ -48,12 +48,11 @@ class LVPIpManager extends LVPEchoHandlerClass {
 			'!hideip'       => LVP::LEVEL_MANAGEMENT
 		);
 		
-		$pCommandHandler = $this->m_pModule['Commands'];
 		foreach ($aCommands as $sTrigger => $nLevel) {
-			$pCommandHandler->register(new LVPCommand(
+			$this->CommandService->register(new LVPCommand(
 				$sTrigger,
 				$nLevel,
-				array ($this, 'handleCommands')
+				array($this, 'handleCommands')
 			));
 		}
 	}
@@ -82,7 +81,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	public function insertIp($nickname, $ip) {
 		$longIp = $this->ip2long($ip);
 
-		$db = LVPDatabase::getInstance();
+		$db = $this->Database;
 		
 		$sql = sprintf('INSERT INTO samp_addresses (
 			user_id, join_date, nickname, ip_address
@@ -91,18 +90,6 @@ class LVPIpManager extends LVPEchoHandlerClass {
 		)', $db->real_escape_string($nickname), $longIp);
 		
 		$db->query($sql, MYSQLI_ASYNC);
-
-		// ok, now we need to poll the result.. how?
-
-		// if ($statement === false) {
-		// 	$this->m_pModule->error($pBot, LVP::DEBUG_CHANNEL,
-		// 		'Error: ' . LVPDatabase::getInstance()->error);
-		// 	return false;
-		// }
-		
-		// $statement->bind_param('si', $nickname, $longIp);
-		
-		// return $statement->execute();
 	}
 	
 	/**
@@ -174,7 +161,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	 * the requested information and outputs a message understandable for
 	 * human beings with the information they need.
 	 * 
-	 * @param LVPEchoHandler $mainModule A pointer back to the main module.
+	 * @param LVPCommandHandler $commandService Reference to the command service.
 	 * @param integer $mode The mode the command is executing in.
 	 * @param integer $level The level we're operating at.
 	 * @param string $channel The channel we'll be sending our output to.
@@ -184,7 +171,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	 * @param array $splitParams Same as above, except split into an array.
 	 * @return string
 	 */
-	public function handleCommands($mainModule, $mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
+	public function handleCommands($commandService, $mode, $level, $channel, $nickname, $trigger, $params, $splitParams) {
 		switch ($trigger) {
 			case '!ipinfo':
 			case '!ipinfoname':
@@ -270,7 +257,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 			WHERE
 				' . $sField . ' = ?';
 		
-		$pStatement = LVPDatabase::getInstance()->prepare($sQuery);
+		$pStatement = $this->Database->prepare($sQuery);
 		if ($pStatement === false) {
 			echo 'There seems to be a problem with the database. Try again later.';
 			return LVPCommand::OUTPUT_ERROR;
@@ -292,7 +279,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 				?, ?
 			) ON DUPLICATE KEY UPDATE display_string = ?';
 		
-		$pStatement = LVPDatabase::getInstance()->prepare($sQuery);
+		$pStatement = $this->Database->prepare($sQuery);
 		if ($pStatement === false) {
 			echo 'There seems to be a problem with the database. Try again later.';
 			return LVPCommand::OUTPUT_ERROR;
@@ -405,7 +392,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 		}
 		
 		if ($this->isValidId($sParams)) {
-			$pPlayer = $this->m_pModule['Players']->getPlayer($sParams);
+			$pPlayer = $this->PlayerService->getPlayer($sParams);
 			
 			if ($pPlayer == null) {
 				echo 'ID not found.';
@@ -415,7 +402,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 			$sParams = $pPlayer['Nickname'];
 		}
 		
-		$pStatement = LVPDatabase::getInstance()->prepare(
+		$pStatement = $this->Database->prepare(
 			'SELECT
 				ip_address,
 				COUNT(ip_address) num_ip
@@ -514,6 +501,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 	 * @return string
 	 *
 	 * @todo Holy shit, future me, please refactor this. This method is way too loooooooooooooooooooooooooooooooong!
+	 * Future me here, I was just about to say that. I guess another future me will get this task.
 	 */
 	private function handleIpInfo($nLevel, $sTrigger, $sParams, $aParams) {
 		if ($sParams !== null) {
@@ -534,7 +522,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 		}
 		
 		if ($this->isValidId($sParams)) {
-			$pPlayer = $this->m_pModule['Players']->getPlayer($sParams);
+			$pPlayer = $this->PlayerService->getPlayer($sParams);
 			
 			if ($pPlayer == null) {
 				echo 'ID not found.';
@@ -560,7 +548,6 @@ class LVPIpManager extends LVPEchoHandlerClass {
 			}
 		}
 		
-		
 		if ($nLevel < LVP::LEVEL_MANAGEMENT && ($nType == self::TYPE_NICKNAME || $nType == self::TYPE_IP)) {
 			if ($nType == self::TYPE_NICKNAME) {
 				$sTable = 'samp_address_hide_nickname';
@@ -579,7 +566,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 				return LVPCommand::OUTPUT_ERROR;
 			}
 			
-			$pStatement = LVPDatabase::getInstance()->prepare(
+			$pStatement = $this->Database->prepare(
 				'SELECT
 					display_string
 				FROM
@@ -614,7 +601,7 @@ class LVPIpManager extends LVPEchoHandlerClass {
 			$pStatement->close();
 		}
 		
-		$pDatabase = LVPDatabase::getInstance();
+		$pDatabase = $this->Database;
 		$sQuery =
 			'SELECT
 				nickname,

@@ -236,6 +236,6 @@ class LVPWelcomeMessage extends LVPEchoHandlerClass {
                 $sMessage = $this->m_aWelcomeMessages[$sNickname];
                 $sMessage = str_replace('%id', $nId, $sMessage);
                 
-                $this->m_pModule->privmsg(null, LVP::ECHO_CHANNEL, '!pm ' . $nId . ' ' . $sMessage);
+                $this->IrcService->privmsg(null, LVP::ECHO_CHANNEL, '!pm ' . $nId . ' ' . $sMessage);
         }
 }
