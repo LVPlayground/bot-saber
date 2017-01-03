@@ -82,7 +82,7 @@ class LVPIpManager implements LVPCommandRegistrar {
 	 * 
 	 * @param string $nickname The nickname belonging to the IP.
 	 * @param string $ip The IP address in dotted notation.
-	 * @return boolean
+	 * @return React\Promise\Promise
 	 */
 	public function insertIp($nickname, $ip) {
 		$longIp = $this->ip2long($ip);
@@ -93,9 +93,9 @@ class LVPIpManager implements LVPCommandRegistrar {
 			user_id, join_date, nickname, ip_address
 		) VALUES (
 			0, NOW(), "%s", %d
-		)', $db->real_escape_string($nickname), $longIp);
+		)', $db->escape($nickname), $longIp);
 		
-		$db->query($sql, MYSQLI_ASYNC);
+		return $db->queryAsync($sql);
 	}
 	
 	/**
@@ -632,7 +632,7 @@ class LVPIpManager implements LVPCommandRegistrar {
 				break;
 			
 			case self::TYPE_NICKNAME:
-				$sQuery .= 'nickname = "' . $pDatabase->real_escape_string($sParams) . '"';
+				$sQuery .= 'nickname = "' . $pDatabase->escape($sParams) . '"';
 				break;
 		}
 		

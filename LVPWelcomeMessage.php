@@ -82,7 +82,7 @@ class LVPWelcomeMessage {
                         return false;
                 }
                 
-                $this->m_aWelcomeMessages[$sNickname] = $sNewMessage;
+                $this->m_aWelcomeMessages[$sNickname] = $sMessage;
                 
                 $pStatement = Database::getInstance()->prepare(
                         "INSERT INTO samp_welcome_message (

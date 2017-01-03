@@ -145,7 +145,7 @@ class LVPPlayerManager implements ArrayAccess, Countable, IteratorAggregate
                                         FROM lvp_mainserver.users_nickname n
                                         LEFT JOIN lvp_mainserver.users u ON u.user_id = n.user_id
                                         LEFT JOIN lvp_mainserver.users_mutable m ON m.user_id = u.user_id
-                                        WHERE n.nickname = "' . $db->real_escape_string($aPlayerInfo['Nickname']) . '"');
+                                        WHERE n.nickname = "' . $db->escape($aPlayerInfo['Nickname']) . '"');
                                 
                                 if ($pResult !== false && $pResult -> num_rows > 0)
                                 {

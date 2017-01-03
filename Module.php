@@ -177,12 +177,12 @@ class LVPEchoHandler extends ModuleBase {
 		$this->PlayerService = new LVPPlayerManager($this->Database);
 		$this->IpService = new LVPIpManager($this->Database, $this->PlayerService);
 		$this->CrewService = new LVPCrewHandler($this->Database, $this->IrcService, $this->PlayerService);
-		$this->EchoMessageParser = new LVPEchoMessageParser($this->Configuration, $this->CommandService,
+		$this->EchoMessageParser = new LVPEchoMessageParser($this->Configuration, $this->Database, $this->CommandService,
 			$this->CrewService, $this->IpService, $this->IrcService, $this->PlayerService, $this->WelcomeMessageService);
 
 		// Ping the database connection every 30 seconds. Reconnect if needed.
 		$this->databasePingTimerId = Timer::create(
-			array($this, 'pingDatabase'),
+			array($this->Database, 'ping'),
 			30000,
 			Timer::INTERVAL
 		);
@@ -292,17 +292,6 @@ class LVPEchoHandler extends ModuleBase {
 
 		$this->nuwaniInfo['Username'] = array_unique($this->nuwaniInfo['Username']);
 		$this->nuwaniInfo['Hostname'] = array_unique($this->nuwaniInfo['Hostname']);
-	}
-
-	/**
-	 * Pings the database connection to see if it's still alive. If not, it will
-	 * reconnect.
-	 */
-	public function pingDatabase() {
-		if (!$this->Database->ping()) {
-			$this->Database->close();
-			$this->Database = new LVPDatabase($this->IrcService);
-		}
 	}
 
 	/**
@@ -420,6 +409,6 @@ class LVPEchoHandler extends ModuleBase {
 	 * to check on any running asynchronous SQL queries.
 	 */
 	public function onTick() {
-		$this->Database->pollAsyncQueries();
+		$this->Database->pollAsyncQuery();
 	}
 }

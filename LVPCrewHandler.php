@@ -417,12 +417,12 @@ class LVPCrewHandler implements LVPCommandRegistrar {
 				FROM lvp_mainserver.users_nickname n
 				LEFT JOIN lvp_mainserver.users u ON u.user_id = n.user_id
 				LEFT JOIN lvp_mainserver.users_mutable m ON m.user_id = u.user_id
-				WHERE n.nickname = "' . $db->real_escape_string($sRealName) . '"');
+				WHERE n.nickname = "' . $db->escape($sRealName) . '"');
 
 			if ($pResult !== false && $pResult->num_rows > 0) {
 				list($nProfileId) = $pResult->fetch_row();
 
-				$pPlayer->fetchInformation($nProfileId);
+				$pPlayer->fetchInformation($db, $nProfileId);
 
 				$pPlayer['TempLevel'] = $pPlayer['Level'];
 				$pPlayer['Level']     = 0;

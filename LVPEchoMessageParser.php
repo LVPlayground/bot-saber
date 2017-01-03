@@ -14,6 +14,11 @@ class LVPEchoMessageParser
         private $Configuration;
 
         /**
+         * @var LVPDatabase
+         */
+        private $Database;
+
+        /**
          * @var LVPCommandHandler
          */
         private $CommandService;
@@ -58,6 +63,7 @@ class LVPEchoMessageParser
         /**
          * 
          * @param LVPConfiguration  $configuration         
+         * @param LVPDatabase       $database
          * @param LVPCommandHandler $commandService        
          * @param LVPCrewHandler    $crewService           
          * @param LVPIpManager      $ipService             
@@ -65,8 +71,9 @@ class LVPEchoMessageParser
          * @param LVPPlayerManager  $playerService         
          * @param LVPWelcomeMessage $welcomeMessageService 
          */
-        public function __construct(LVPConfiguration $configuration, LVPCommandHandler $commandService, LVPCrewHandler $crewService, LVPIpManager $ipService, LVPIrcService $ircService, LVPPlayerManager $playerService, LVPWelcomeMessage $welcomeMessageService) {
+        public function __construct(LVPConfiguration $configuration, LVPDatabase $database, LVPCommandHandler $commandService, LVPCrewHandler $crewService, LVPIpManager $ipService, LVPIrcService $ircService, LVPPlayerManager $playerService, LVPWelcomeMessage $welcomeMessageService) {
                 $this->Configuration = $configuration;
+                $this->Database = $database;
                 $this->CommandService = $commandService;
                 $this->CrewService = $crewService;
                 $this->IpService = $ipService;
@@ -347,30 +354,24 @@ class LVPEchoMessageParser
          */
         private function handleIpMessage (Bot $pBot, $nId, $sNickname, $sIp, $aChunks)
         {
-                $this -> PlayerService -> setPlayerKey ($nId, 'IP', $sIp);
+                $this->PlayerService->setPlayerKey($nId, 'IP', $sIp);
                 
-                if (defined ('DEBUG_MODE') && DEBUG_MODE)
-                {
+                if (defined ('DEBUG_MODE') && DEBUG_MODE) {
                         // Don't save IPs when in debug mode.
-                        return ;
+                        return;
                 }
                 
-                $bResult = $this -> IpService -> insertIp ($sNickname, $sIp);
-                if (!$bResult)
-                {
-                        $this -> IrcService -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '": Trying again with a new connection...');
-                        LVPDatabase :: restart ();
-                        
-                        $bResult = $this -> IpService -> insertIp ($sNickname, $sIp);
-                        if ($bResult)
-                        {
-                                $this -> IrcService -> success ($pBot, LVP :: DEBUG_CHANNEL, 'Saved IP address "' . $sIp . '".');
-                        }
-                        else
-                        {
-                                $this -> IrcService -> error ($pBot, LVP :: DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '" with nickname "' . $sNickname . '".');
-                        }
-                }
+                $promise = $this->IpService->insertIp($sNickname, $sIp);
+                $promise->otherwise(function ($error) use ($pBot, $sNickname, $sIp) {
+                        $this->IrcService->error($pBot, LVP::DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '": Trying again with a new connection...');
+                        $this->Database->restart();
+                        $promise = $this->IpService->insertIp($sNickname, $sIp);
+                        $promise->then(function ($link) use ($pBot, $sIp) {
+                                $this->IrcService->success($pBot, LVP::DEBUG_CHANNEL, 'Saved IP address "' . $sIp . '".');
+                        }, function ($error) use ($pBot, $sNickname, $sIp) {
+                                $this->IrcService->error($pBot, LVP::DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '" with nickname "' . $sNickname . '".');
+                        });
+                });
         }
         
         /**
@@ -409,7 +410,7 @@ class LVPEchoMessageParser
                         $nJoinTime = $this -> PlayerService -> getPlayerKey ($nId, 'JoinTime');
                         $nSessionTime = time () - $nJoinTime;
                         
-                        $db = LVPDatabase :: getInstance ();
+                        $db = $this->Database;
                         $db -> query (
                                 'INSERT INTO samp_ingame_test
                                         (user_id, part_time, session_time)
@@ -447,7 +448,7 @@ class LVPEchoMessageParser
                         FROM lvp_mainserver.users_nickname n
                         LEFT JOIN lvp_mainserver.users u ON u.user_id = n.user_id
                         LEFT JOIN lvp_mainserver.users_mutable m ON m.user_id = u.user_id
-                        WHERE n.nickname = "' . $db -> real_escape_string ($sNickname) . '"');
+                        WHERE n.nickname = "' . $db -> escape ($sNickname) . '"');
                 
                 if ($pResult !== false && $pResult -> num_rows > 0)
                 {
