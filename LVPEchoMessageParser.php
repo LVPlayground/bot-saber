@@ -453,7 +453,7 @@ class LVPEchoMessageParser
                 if ($pResult !== false && $pResult -> num_rows > 0)
                 {
                         list ($nProfileId) = $pResult -> fetch_row ();
-                        $this -> PlayerService[$nId] -> fetchInformation ($nProfileId);
+                        $this -> PlayerService[$nId] -> fetchInformation ($db, $nProfileId);
                         $pResult -> free ();
                 }
                 

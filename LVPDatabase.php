@@ -1,4 +1,6 @@
 <?php
+require 'LVPAsyncQuery.php';
+
 use Nuwani\Configuration;
 
 /**
@@ -84,7 +86,7 @@ class LVPDatabase {
 			$read[] = $error[] = $reject[] = $link;
 		}
 
-		if (!self::poll($read, $error, $reject, 0)) {
+		if (!mysqli::poll($read, $error, $reject, 0)) {
 			// Nothing to read yet.
 			return;
 		}

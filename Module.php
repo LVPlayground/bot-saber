@@ -318,7 +318,7 @@ class LVPEchoHandler extends ModuleBase {
 		}
 
 		if (strtolower($channel) == LVP::RADIO_CHANNEL) {
-			$this->privmsg($bot, LVP::RADIO_CHANNEL, '!dj');
+			$this->IrcService->privmsg($bot, LVP::RADIO_CHANNEL, '!dj');
 		}
 	}
 
