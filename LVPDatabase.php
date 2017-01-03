@@ -1,6 +1,5 @@
 <?php
 use Nuwani\Configuration;
-use Nuwani\ModuleManager;
 
 /**
  * LVPEchoHandler module for Nuwani v2
@@ -20,18 +19,51 @@ use Nuwani\ModuleManager;
 class LVPDatabase extends MySQLi {
 
 	/**
+	 * @var LVPIrcService
+	 */
+	private $IrcService;
+
+	/**
 	 * The constructor will create a new connection with the configured
 	 * connection details.
 	 */
-	public function __construct() {
-		$aConfiguration = Configuration::getInstance()->get('LVPDatabase');
+	public function __construct(LVPIrcService $ircService) {
+		$this->IrcService = $ircService;
 
+		$aConfiguration = Configuration::getInstance()->get('LVPDatabase');
 		parent::__construct(
 			$aConfiguration['hostname'],
 			$aConfiguration['username'],
 			$aConfiguration['password'],
 			$aConfiguration['database']
 		);
+	}
+
+	/**
+	 * Check if there are running async queries and if, check on their status.
+	 */
+	public function pollAsyncQueries() {
+		// $links = array($this);
+		// $read = $error = $reject = array();
+		// foreach ($links as $link) {
+		// 	$read[] = $error[] = $reject[] = $link;
+		// }
+
+		// if (!self::poll($read, $error, $reject, 0)) {
+		// 	return;
+		// }
+
+		// foreach ($read as $link) {
+		// 	if ($result = $link->reap_async_query()) {
+		// 		// TODO what do with result
+		// 		print_r($result->fetch_row());
+		// 		if (is_object($result)) {
+		// 			$result->free_result();
+		// 		}
+		// 	} else {
+		// 		$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Error: ' . $link->error);
+		// 	}
+		// }
 	}
 	
 	/**
@@ -45,8 +77,7 @@ class LVPDatabase extends MySQLi {
 	public function prepare($sStatement) {
 		$pStatement = parent::prepare($sStatement);
 		if (!is_object($pStatement)) {
-			ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
-				error(null, LVP::DEBUG_CHANNEL, 'Preparing statement failed: ' . $this->error);
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Preparing statement failed: ' . $this->error);
 			
 			return false;
 		}
@@ -68,10 +99,8 @@ class LVPDatabase extends MySQLi {
 		$sUnwanted = ob_get_clean();
 		
 		if ($mResult == false) {
-			ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
-				error(null, LVP::DEBUG_CHANNEL, 'Executing query failed: ' . $this->error);
-			ModuleManager::getInstance()->offsetGet('LVPEchoHandler')->
-				error(null, LVP::DEBUG_CHANNEL, $sUnwanted);
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Executing query failed: ' . $this->error);
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, $sUnwanted);
 		}
 		
 		return $mResult;

@@ -36,24 +36,6 @@ use Nuwani\Timer;
 class LVPEchoHandler extends ModuleBase {
 
 	/**
-	 * An multidimensional array with all the possible idents and hostnames
-	 * the Nuwani bots may have. All messages coming from sources that don't
-	 * match with at least one ident and hostname, will be ignored as a
-	 * Nuwani message.
-	 *
-	 * @var array
-	 */
-	private $m_aNuwaniInfo;
-
-	/**
-	 * In here we store the identification string of the timer that's
-	 * checking the database connection.
-	 *
-	 * @var string
-	 */
-	private $m_nDatabaseTimerId;
-
-	/**
 	 * A reference to the MySQLi object with the actual LVP database will
 	 * be available in here.
 	 *
@@ -142,6 +124,24 @@ class LVPEchoHandler extends ModuleBase {
 	private $RadioService;
 
 	/**
+	 * An multidimensional array with all the possible idents and hostnames
+	 * the Nuwani bots may have. All messages coming from sources that don't
+	 * match with at least one ident and hostname, will be ignored as a
+	 * Nuwani message.
+	 *
+	 * @var array
+	 */
+	private $nuwaniInfo;
+
+	/**
+	 * In here we store the identification string of the timer that's
+	 * checking the database connection.
+	 *
+	 * @var string
+	 */
+	private $databasePingTimerId;
+
+	/**
 	 * The constructor will prepare the module for immediate use.
 	 */
 	public function __construct() {
@@ -168,26 +168,26 @@ class LVPEchoHandler extends ModuleBase {
 			mkdir('Data/LVP', 0777);
 		}
 
-		$this->Database = new LVPDatabase();
-		$this->IrcService = new LVPIrcService();
-		$this->CommandService = new LVPCommandHandler($this->IrcService);
 		$this->Configuration = new LVPConfiguration();
-		$this->PlayerService = new LVPPlayerManager($this->Database);
-		$this->CrewService = new LVPCrewHandler($this->Database, $this->IrcService, $this->PlayerService);
-		$this->IpService = new LVPIpManager($this->Database, $this->PlayerService);
+		$this->IrcService = new LVPIrcService();
+		$this->Database = new LVPDatabase($this->IrcService);
+		$this->CommandService = new LVPCommandHandler($this->IrcService);
+		$this->RadioService = new LVPRadioHandler($this->IrcService);
 		$this->WelcomeMessageService = new LVPWelcomeMessage($this->IrcService);
+		$this->PlayerService = new LVPPlayerManager($this->Database);
+		$this->IpService = new LVPIpManager($this->Database, $this->PlayerService);
+		$this->CrewService = new LVPCrewHandler($this->Database, $this->IrcService, $this->PlayerService);
 		$this->EchoMessageParser = new LVPEchoMessageParser($this->Configuration, $this->CommandService,
 			$this->CrewService, $this->IpService, $this->IrcService, $this->PlayerService, $this->WelcomeMessageService);
-		$this->RadioService = new LVPRadioHandler($this->IrcService);
 
 		// Ping the database connection every 30 seconds. Reconnect if needed.
-		$this->m_nDatabaseTimerId = Timer::create(
+		$this->databasePingTimerId = Timer::create(
 			array($this, 'pingDatabase'),
 			30000,
 			Timer::INTERVAL
 		);
 
-		$this->setNuwaniInfo(
+		$this->addNuwaniInfo(
 			array(
 				'Nuwani', 'Nuweni', 'Nuwini', 'Nuwoni', 'Nuwuni',
 				'Nowani', 'Noweni', 'Nowini', 'Nowoni', 'Nowuni',
@@ -279,19 +279,19 @@ class LVPEchoHandler extends ModuleBase {
 	 * @param array $aUsername Array of possible usernames.
 	 * @param array $aHostname Array of possible hostnames.
 	 */
-	public function setNuwaniInfo($aUsername, $aHostname) {
-		if ($this->m_aNuwaniInfo == null) {
-			$this->m_aNuwaniInfo = array(
+	public function addNuwaniInfo($aUsername, $aHostname) {
+		if ($this->nuwaniInfo == null) {
+			$this->nuwaniInfo = array(
 				'Username' => array(),
 				'Hostname' => array()
 			);
 		}
 
-		$this->m_aNuwaniInfo['Username'] = array_merge($this->m_aNuwaniInfo['Username'], $aUsername);
-		$this->m_aNuwaniInfo['Hostname'] = array_merge($this->m_aNuwaniInfo['Hostname'], $aHostname);
+		$this->nuwaniInfo['Username'] = array_merge($this->nuwaniInfo['Username'], $aUsername);
+		$this->nuwaniInfo['Hostname'] = array_merge($this->nuwaniInfo['Hostname'], $aHostname);
 
-		$this->m_aNuwaniInfo['Username'] = array_unique($this->m_aNuwaniInfo['Username']);
-		$this->m_aNuwaniInfo['Hostname'] = array_unique($this->m_aNuwaniInfo['Hostname']);
+		$this->nuwaniInfo['Username'] = array_unique($this->nuwaniInfo['Username']);
+		$this->nuwaniInfo['Hostname'] = array_unique($this->nuwaniInfo['Hostname']);
 	}
 
 	/**
@@ -301,7 +301,7 @@ class LVPEchoHandler extends ModuleBase {
 	public function pingDatabase() {
 		if (!$this->Database->ping()) {
 			$this->Database->close();
-			$this->Database = new LVPDatabase();
+			$this->Database = new LVPDatabase($this->IrcService);
 		}
 	}
 
@@ -367,7 +367,7 @@ class LVPEchoHandler extends ModuleBase {
 		}
 
 
-		if (in_array($pBot->In->User->Hostname, $this->m_aNuwaniInfo['Hostname'])) {
+		if (in_array($pBot->In->User->Hostname, $this->nuwaniInfo['Hostname'])) {
 			if ($lowerChannel == LVP::ECHO_CHANNEL) {
 				// A message from a Nuwani bot in the echo channel.
 				$this->EchoMessageParser->parse($pBot, $sMessage);
@@ -420,30 +420,6 @@ class LVPEchoHandler extends ModuleBase {
 	 * to check on any running asynchronous SQL queries.
 	 */
 	public function onTick() {
-		// $links = array($this->db);
-		// $processed = 0;
-		// do {
-		// 	$read = $error = $reject = array();
-		// 	foreach ($links as $link) {
-		// 		$read[] = $error[] = $reject[] = $link;
-		// 	}
-
-		// 	if (!mysqli::poll($read, $error, $reject, 1)) {
-		// 		continue;
-		// 	}
-
-		// 	foreach ($read as $link) {
-		// 		if ($result = $link->reap_async_query()) {
-		// 			// TODO what do with result
-		// 			print_r($result->fetch_row());
-		// 			if (is_object($result)) {
-		// 				$result->free_result();
-		// 			}
-		// 		} else {
-		// 			$this->error(null, LVP::DEBUG_CHANNEL, 'Error: ' . $link->error);
-		// 		}
-		// 		$processed++;
-		// 	}
-		// } while ($processed < count($links));
+		$this->Database->pollAsyncQueries();
 	}
 }
