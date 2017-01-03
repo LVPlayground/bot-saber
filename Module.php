@@ -59,7 +59,15 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPDatabase
 	 */
-	private $m_pDatabase;
+	private $Database;
+
+	/**
+	 * The IRC service helps in communicating results from processing back to
+	 * people on... well, IRC.
+	 *
+	 * @var LVPIrcService
+	 */
+	private $IrcService;
 
 	/**
 	 * In order to easily add settings for this module, I came up with a
@@ -68,7 +76,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPConfiguration
 	 */
-	private $m_pConfiguration;
+	private $Configuration;
 
 	/**
 	 * And yet another very important bit is right here. The command handler
@@ -77,7 +85,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPCommandHandler
 	 */
-	private $m_pCommandHandler;
+	private $CommandService;
 
 	/**
 	 * This handler will handle anything to do with the LVP crew. This
@@ -86,7 +94,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPCrewHandler
 	 */
-	private $m_pCrewHandler;
+	private $CrewService;
 
 	/**
 	 * Messages from the echo channel will be parsed by this module and the
@@ -96,7 +104,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPEchoMessageParser
 	 */
-	private $m_pMessageParser;
+	private $EchoMessageParser;
 
 	/**
 	 * As the name suggests, the LVPIpManager manages all stuff regarding IPs
@@ -106,7 +114,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPIpManager
 	 */
-	private $m_pIpManager;
+	private $IpService;
 
 	/**
 	 * This manager will be used to manage all the LVPPlayer objects that
@@ -114,7 +122,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPPlayerManager
 	 */
-	private $m_pPlayerManager;
+	private $PlayerService;
 
 	/**
 	 * An old feature of the previous bot were personalized welcome messages
@@ -123,7 +131,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPWelcomeMessage
 	 */
-	private $m_pWelcomeMessage;
+	private $WelcomeMessageService;
 
 	/**
 	 * The radio service facilitates all commands and behavior relating to the
@@ -131,20 +139,7 @@ class LVPEchoHandler extends ModuleBase {
 	 *
 	 * @var LVPRadioHandler
 	 */
-	private $m_pRadioHandler;
-
-	/**
-	 * The IRC service helps in communicating results from processing back to
-	 * people on... well, IRC.
-	 *
-	 * Note: yes, this is a public property. This is the new style of
-	 * programming for this module. This pattern should play nicely with IDEs
-	 * for stuff like type hinting and code completion. In the future, the
-	 * properties above should be converted to this pattern as well.
-	 * 
-	 * @var LVPIrcService
-	 */
-	public $IrcService;
+	private $RadioService;
 
 	/**
 	 * The constructor will prepare the module for immediate use.
@@ -173,18 +168,17 @@ class LVPEchoHandler extends ModuleBase {
 			mkdir('Data/LVP', 0777);
 		}
 
-		$this->m_pDatabase		 = new LVPDatabase();
-		$this->IrcService		 = new LVPIrcService();
-		$this->m_pCommandHandler = new LVPCommandHandler($this->IrcService);
-		$this->m_pConfiguration  = new LVPConfiguration();
-		$this->m_pPlayerManager  = new LVPPlayerManager($this->m_pDatabase);
-		$this->m_pCrewHandler    = new LVPCrewHandler($this->m_pDatabase, $this->IrcService, $this->m_pPlayerManager);
-		$this->m_pIpManager      = new LVPIpManager($this->m_pDatabase, $this->m_pPlayerManager);
-		$this->m_pWelcomeMessage = new LVPWelcomeMessage($this->IrcService);
-		$this->m_pMessageParser  = new LVPEchoMessageParser($this->m_pConfiguration,
-			$this->m_pCommandHandler, $this->m_pCrewHandler, $this->m_pIpManager,
-			$this->IrcService, $this->m_pPlayerManager, $this->m_pWelcomeMessage);
-		$this->m_pRadioHandler   = new LVPRadioHandler($this->IrcService);
+		$this->Database = new LVPDatabase();
+		$this->IrcService = new LVPIrcService();
+		$this->CommandService = new LVPCommandHandler($this->IrcService);
+		$this->Configuration = new LVPConfiguration();
+		$this->PlayerService = new LVPPlayerManager($this->Database);
+		$this->CrewService = new LVPCrewHandler($this->Database, $this->IrcService, $this->PlayerService);
+		$this->IpService = new LVPIpManager($this->Database, $this->PlayerService);
+		$this->WelcomeMessageService = new LVPWelcomeMessage($this->IrcService);
+		$this->EchoMessageParser = new LVPEchoMessageParser($this->Configuration, $this->CommandService,
+			$this->CrewService, $this->IpService, $this->IrcService, $this->PlayerService, $this->WelcomeMessageService);
+		$this->RadioService = new LVPRadioHandler($this->IrcService);
 
 		// Ping the database connection every 30 seconds. Reconnect if needed.
 		$this->m_nDatabaseTimerId = Timer::create(
@@ -227,9 +221,9 @@ class LVPEchoHandler extends ModuleBase {
 	 * functions in PHP.
 	 */
 	public function registerCommands() {
-		$this->m_pConfiguration->registerCommands($this->m_pCommandHandler);
-		$this->m_pCrewHandler->registerCommands($this->m_pCommandHandler);
-		$this->m_pIpManager->registerCommands($this->m_pCommandHandler);
+		$this->Configuration->registerCommands($this->CommandService);
+		$this->CrewService->registerCommands($this->CommandService);
+		$this->IpService->registerCommands($this->CommandService);
 
 		$this->CommandService->register(new LVPCommand(
 			'!ses',
@@ -305,9 +299,9 @@ class LVPEchoHandler extends ModuleBase {
 	 * reconnect.
 	 */
 	public function pingDatabase() {
-		if (!$this->m_pDatabase->ping()) {
-			$this->m_pDatabase->close();
-			$this->m_pDatabase = new LVPDatabase();
+		if (!$this->Database->ping()) {
+			$this->Database->close();
+			$this->Database = new LVPDatabase();
 		}
 	}
 
@@ -451,57 +445,5 @@ class LVPEchoHandler extends ModuleBase {
 		// 		$processed++;
 		// 	}
 		// } while ($processed < count($links));
-	}
-
-	/**
-	 * Access to the several LVPEchoHandler classes is now also possible
-	 * using the property syntax. These do use an abbreviated form however,
-	 * so that it's much shorter than the ArrayAccess syntax.
-	 *
-	 * @param string $sProperty The abbreviated name of the class we want to access.
-	 * @return mixed
-	 */
-	public function __get($sProperty) {
-		// TODO Convert these into real properties instead, can be done when all
-		// deprecated names are replaced with the new ones.
-		switch ($sProperty) {
-			case 'config': // DEPRECATED
-			case 'Configuration':
-				return $this->m_pConfiguration;
-
-			case 'db': // DEPRECATED
-			case 'Database':
-				return $this->m_pDatabase;
-
-			case 'crew': // DEPRECATED
-			case 'CrewService':
-				return $this->m_pCrewHandler;
-
-			case 'parser': // DEPRECATED
-			case 'EchoMessageParser':
-				return $this->m_pMessageParser;
-
-			case 'cmds': // DEPRECATED
-			case 'CommandService':
-				return $this->m_pCommandHandler;
-
-			case 'ip': // DEPRECATED
-			case 'IpService':
-				return $this->m_pIpManager;
-
-			case 'players': // DEPRECATED
-			case 'PlayerService':
-				return $this->m_pPlayerManager;
-
-			case 'welcomemsg': // DEPRECATED
-			case 'WelcomeMessageService':
-				return $this->m_pWelcomeMessage;
-
-			case 'radio': // DEPRECATED
-			case 'RadioService':
-				return $this->m_pRadioHandler;
-		}
-
-		return false;
 	}
 }
