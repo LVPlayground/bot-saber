@@ -215,6 +215,10 @@ class LVPEchoHandler extends ModuleBase {
 		$this->registerCommands();
 	}
 
+	public function getDatabase() {
+		return $this->Database;
+	}
+
 	/**
 	 * This method registers some loose commands that don't belong in any
 	 * other classes. Most commands will probably make use of the anonymous

@@ -47,6 +47,14 @@ class LVPDatabase {
 		$this->connect();
 	}
 
+	public function getCurrentAsyncQuery() {
+		return $this->currentAsyncQuery;
+	}
+
+	public function getPendingAsyncQueries() {
+		return $this->pendingAsyncQueries;
+	}
+
 	public function connect() {
 		$configuration = Configuration::getInstance()->get('LVPDatabase');
 		$this->connection = new \MySQLi(
@@ -75,7 +83,7 @@ class LVPDatabase {
 			$this->currentAsyncQuery->start();
 			if (!$this->query($this->currentAsyncQuery->getQuery(), MYSQLI_ASYNC)) {
 				$this->currentAsyncQuery->error($this->error);
-				// Error'd out before we even began, cya later.
+				// Error'd out before we even began, error has already been logged.
 				return;
 			}
 		}
@@ -96,19 +104,27 @@ class LVPDatabase {
 				if (is_object($result)) {
 					// Only applies to SELECT queries
 					$this->currentAsyncQuery->success($result);
-					// print_r($result->fetch_row());
-					// $result->free_result();
 				} else {
 					// INSERT/UPDATE/DELETE don't return a result
 					$this->currentAsyncQuery->success($link);
 				}
 			} else {
-				$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Error: ' . $link->error);
+				$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Error in read: ' . $link->error);
 				$this->currentAsyncQuery->error($link->error);
 			}
 		}
+
+		foreach ($error as $link) {
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Errored link: ' . $link->error);
+			$this->currentAsyncQuery->error($link->error);
+		}
+
+		foreach ($reject as $link) {
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Rejected link: ' . $link->error);
+			$this->currentAsyncQuery->error($link->error);
+		}
 	}
-	
+
 	/**
 	 * To prevent random errors being thrown to the users, I override this
 	 * method and catch the error as-it-happens, to send it to the debug
@@ -141,7 +157,7 @@ class LVPDatabase {
 		$result = $this->connection->query($query, $resultMode);
 		$unwanted = ob_get_clean();
 		
-		if ($result == false) {
+		if (!$result) {
 			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Executing query failed: ' . $this->error);
 			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, $unwanted);
 		}
