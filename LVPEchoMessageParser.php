@@ -29,11 +29,6 @@ class LVPEchoMessageParser
         private $CrewService;
 
         /**
-         * @var LVPIpManager
-         */
-        private $IpService;
-
-        /**
          * @var LVPIrcService
          */
         private $IrcService;
@@ -66,17 +61,15 @@ class LVPEchoMessageParser
          * @param LVPDatabase       $database
          * @param LVPCommandHandler $commandService        
          * @param LVPCrewHandler    $crewService           
-         * @param LVPIpManager      $ipService             
          * @param LVPIrcService     $ircService            
          * @param LVPPlayerManager  $playerService         
          * @param LVPWelcomeMessage $welcomeMessageService 
          */
-        public function __construct(LVPConfiguration $configuration, LVPDatabase $database, LVPCommandHandler $commandService, LVPCrewHandler $crewService, LVPIpManager $ipService, LVPIrcService $ircService, LVPPlayerManager $playerService, LVPWelcomeMessage $welcomeMessageService) {
+        public function __construct(LVPConfiguration $configuration, LVPDatabase $database, LVPCommandHandler $commandService, LVPCrewHandler $crewService, LVPIrcService $ircService, LVPPlayerManager $playerService, LVPWelcomeMessage $welcomeMessageService) {
                 $this->Configuration = $configuration;
                 $this->Database = $database;
                 $this->CommandService = $commandService;
                 $this->CrewService = $crewService;
-                $this->IpService = $ipService;
                 $this->IrcService = $ircService;
                 $this->PlayerService = $playerService;
                 $this->WelcomeMessageService = $welcomeMessageService;
@@ -176,26 +169,6 @@ class LVPEchoMessageParser
                                 break;
                         }
                 }
-                
-                /* Enable this when going to save the echo logs.
-                if (in_array ($aChunks [0], $this -> m_aIgnoreTriggers))
-                {
-                        return ;
-                }
-                
-                if (count ($aChunks) == count (explode (', ', implode (' ', $aChunks))))
-                {
-                        // Filter out the !players command.
-                        return ;
-                }
-                
-                if (Func :: getPieces ($aChunks, ' ', 0, 3) == 'has been online for' ||
-                    Func :: getPieces ($aChunks, ' ', 0, 2) == 'is a player' ||
-                    Func :: getPieces ($aChunks, ' ', 0, 4) == 'requested player is not registered')
-                {
-                        return ;
-                }
-                */
         }
         
         /**
@@ -355,23 +328,6 @@ class LVPEchoMessageParser
         private function handleIpMessage (Bot $pBot, $nId, $sNickname, $sIp, $aChunks)
         {
                 $this->PlayerService->setPlayerKey($nId, 'IP', $sIp);
-                
-                if (defined ('DEBUG_MODE') && DEBUG_MODE) {
-                        // Don't save IPs when in debug mode.
-                        return;
-                }
-                
-                $promise = $this->IpService->insertIp($sNickname, $sIp);
-                $promise->otherwise(function ($error) use ($pBot, $sNickname, $sIp) {
-                        $this->IrcService->error($pBot, LVP::DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '": Trying again with a new connection...');
-                        $this->Database->restart();
-                        $promise = $this->IpService->insertIp($sNickname, $sIp);
-                        $promise->then(function ($link) use ($pBot, $sIp) {
-                                $this->IrcService->success($pBot, LVP::DEBUG_CHANNEL, 'Saved IP address "' . $sIp . '".');
-                        }, function ($error) use ($pBot, $sNickname, $sIp) {
-                                $this->IrcService->error($pBot, LVP::DEBUG_CHANNEL, 'Could not save IP address "' . $sIp . '" with nickname "' . $sNickname . '".');
-                        });
-                });
         }
         
         /**

@@ -76,29 +76,6 @@ class LVPIpManager implements LVPCommandRegistrar {
 	}
 	
 	/**
-	 * This method will simply insert the supplied IP with the given
-	 * nickname into the IP database. Returns a boolean indicating it did
-	 * that successfully or not.
-	 * 
-	 * @param string $nickname The nickname belonging to the IP.
-	 * @param string $ip The IP address in dotted notation.
-	 * @return React\Promise\Promise
-	 */
-	public function insertIp($nickname, $ip) {
-		$longIp = $this->ip2long($ip);
-
-		$db = $this->Database;
-		
-		$sql = sprintf('INSERT INTO samp_addresses (
-			user_id, join_date, nickname, ip_address
-		) VALUES (
-			0, NOW(), "%s", %d
-		)', $db->escape($nickname), $longIp);
-		
-		return $db->queryAsync($sql);
-	}
-	
-	/**
 	 * This method returns true when the given ID is numeric and between 0
 	 * and 199. These are valid IDs within SA-MP.
 	 * 
@@ -412,7 +389,7 @@ class LVPIpManager implements LVPCommandRegistrar {
 				ip_address,
 				COUNT(ip_address) num_ip
 			FROM
-				samp_addresses
+				lvp_mainserver.sessions
 			WHERE
 				nickname = ?
 			GROUP BY
@@ -498,15 +475,14 @@ class LVPIpManager implements LVPCommandRegistrar {
 	 * that IP range. If given a nickname, it will simply return all the IPs
 	 * found with that nickname. Some additional parsing and adjustments in
 	 * the query make the output easily readable and understandable.
+	 *
+	 * Note to reader: this method is ugly. Sorry.
 	 * 
 	 * @param integer $nLevel The level we're operating at.
 	 * @param string $sTrigger The trigger that set this in motion.
 	 * @param string $sParams All of the text following the trigger.
 	 * @param array $aParams Same as above, except split into an array.
 	 * @return string
-	 *
-	 * @todo Holy shit, future me, please refactor this. This method is way too loooooooooooooooooooooooooooooooong!
-	 * Future me here, I was just about to say that. I guess another future me will get this task.
 	 */
 	private function handleIpInfo($nLevel, $sTrigger, $sParams, $aParams) {
 		if ($sParams !== null) {
@@ -612,11 +588,10 @@ class LVPIpManager implements LVPCommandRegistrar {
 				nickname,
 				GROUP_CONCAT(DISTINCT ip_address) ip_address,
 				COUNT(*) num,
-				MAX(join_date) join_date,
-				GROUP_CONCAT(DISTINCT country) country,
+				MAX(session_date) session_date,
 				GROUP_CONCAT(DISTINCT user_id) user_id
 			FROM
-				samp_addresses
+				lvp_mainserver.sessions
 			WHERE ';
 		
 		switch ($nType) {
@@ -667,7 +642,7 @@ class LVPIpManager implements LVPCommandRegistrar {
 		
 		$sQuery .= 
 			' ORDER BY
-				join_date DESC
+				session_date DESC
 			LIMIT 15';
 		
 		$pResult = $pDatabase->query($sQuery);
@@ -700,14 +675,14 @@ class LVPIpManager implements LVPCommandRegistrar {
 		$nUnderlineDiff = 86400 * 3;
 		$nTime     = time ();
 		$bFirst    = true;
-		$pLocation = null; // Inited when needed.
+		$pLocation = new Location();
 		
 		while (($aRow = $pResult->fetch_assoc()) !== null) {
 			if ($bFirst) $bFirst = false;
 			else         echo ', ';
 			
 			$bUnderline = false;
-			if ($nTime - strtotime($aRow['join_date']) <= $nUnderlineDiff) {
+			if ($nTime - strtotime($aRow['session_date']) <= $nUnderlineDiff) {
 				$bUnderline = true;
 				echo ModuleBase::UNDERLINE;
 			}
@@ -728,15 +703,8 @@ class LVPIpManager implements LVPCommandRegistrar {
 				echo ModuleBase::UNDERLINE;
 			}
 			
-			if ($aRow['country'] == '') {
-				if ($pLocation == null) {
-					$pLocation = new Location();
-				}
-				
-				// Not yet retrieved, do it ourselves.
-				$aInfo = $pLocation->lookup(long2ip(explode(',', $aRow['ip_address'])[0]));
-				$aRow['country'] = $aInfo['country_2'];
-			}
+			$aInfo = $pLocation->lookup(long2ip(explode(',', $aRow['ip_address'])[0]));
+			$aRow['country'] = $aInfo['country_2'];
 			
 			if ($aRow['num'] > 1 || ($aRow['country'] != '--' && $aRow['country'] != '')) {
 				// Darker color so that other information stays readable.

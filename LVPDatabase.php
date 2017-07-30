@@ -1,6 +1,4 @@
 <?php
-require 'LVPAsyncQuery.php';
-
 use Nuwani\Configuration;
 
 /**
@@ -26,33 +24,13 @@ class LVPDatabase {
 	private $connection;
 
 	/**
-	 * @var LVPAsyncQuery
-	 */
-	private $currentAsyncQuery;
-
-	/**
-	 * Queue of async queries we need to execute after the current one is done.
-	 * @var \SqlQueue
-	 */
-	private $pendingAsyncQueries;
-
-	/**
 	 * The constructor will create a new connection with the configured
 	 * connection details.
 	 */
 	public function __construct(LVPIrcService $ircService) {
 		$this->IrcService = $ircService;
-		$this->pendingAsyncQueries = new \SplQueue();
 
 		$this->connect();
-	}
-
-	public function getCurrentAsyncQuery() {
-		return $this->currentAsyncQuery;
-	}
-
-	public function getPendingAsyncQueries() {
-		return $this->pendingAsyncQueries;
 	}
 
 	public function connect() {
@@ -67,62 +45,6 @@ class LVPDatabase {
 
 	public function escape($escapeStr) {
 		return $this->connection->real_escape_string($escapeStr);
-	}
-
-	/**
-	 * Check if there are running async queries and if, check on their status.
-	 */
-	public function pollAsyncQuery() {
-		if ($this->currentAsyncQuery == null) {
-			if ($this->pendingAsyncQueries->isEmpty()) {
-				// Nothing to do.
-				return;
-			}
-
-			$this->currentAsyncQuery = $this->pendingAsyncQueries->dequeue();
-			$this->currentAsyncQuery->start();
-			if (!$this->query($this->currentAsyncQuery->getQuery(), MYSQLI_ASYNC)) {
-				$this->currentAsyncQuery->error($this->error);
-				// Error'd out before we even began, error has already been logged.
-				return;
-			}
-		}
-
-		$links = array($this->connection);
-		$read = $error = $reject = array();
-		foreach ($links as $link) {
-			$read[] = $error[] = $reject[] = $link;
-		}
-
-		if (!mysqli::poll($read, $error, $reject, 0)) {
-			// Nothing to read yet.
-			return;
-		}
-
-		foreach ($read as $link) {
-			if ($result = $link->reap_async_query()) {
-				if (is_object($result)) {
-					// Only applies to SELECT queries
-					$this->currentAsyncQuery->success($result);
-				} else {
-					// INSERT/UPDATE/DELETE don't return a result
-					$this->currentAsyncQuery->success($link);
-				}
-			} else {
-				$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Error in read: ' . $link->error);
-				$this->currentAsyncQuery->error($link->error);
-			}
-		}
-
-		foreach ($error as $link) {
-			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Errored link: ' . $link->error);
-			$this->currentAsyncQuery->error($link->error);
-		}
-
-		foreach ($reject as $link) {
-			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Rejected link: ' . $link->error);
-			$this->currentAsyncQuery->error($link->error);
-		}
 	}
 
 	/**
@@ -163,23 +85,6 @@ class LVPDatabase {
 		}
 		
 		return $result;
-	}
-
-	/**
-	 * Execute a query asynchronously, returning a promise.
-	 * 
-	 * @param  string $query The query to execute.
-	 * @return React\Promise\Promise
-	 */
-	public function queryAsync($query) {
-		$asyncQuery = new LVPAsyncQuery($query);
-		$this->pendingAsyncQueries->enqueue($asyncQuery);
-
-		return $asyncQuery->promise()->then(function () {
-			$this->currentAsyncQuery = null;
-		}, function () {
-			$this->currentAsyncQuery = null;
-		});
 	}
 
 	/**

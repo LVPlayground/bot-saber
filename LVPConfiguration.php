@@ -228,12 +228,6 @@ class LVPConfiguration implements ArrayAccess, LVPCommandRegistrar {
 			return;
 		}
 		
-		// TODO Decide if I want to keep this in some other form after the refactor.
-		// if (!isset($this->m_pModule[$sPrefix])) {
-		// 	// Unknown handler class? Don't bother then.
-		// 	return;
-		// }
-		
 		$this->m_aConfiguration[$sPrefix . '.' . $sName] = $mDefault;
 		$this->save();
 		

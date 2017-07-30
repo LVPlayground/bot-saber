@@ -178,7 +178,7 @@ class LVPEchoHandler extends ModuleBase {
 		$this->IpService = new LVPIpManager($this->Database, $this->PlayerService);
 		$this->CrewService = new LVPCrewHandler($this->Database, $this->IrcService, $this->PlayerService);
 		$this->EchoMessageParser = new LVPEchoMessageParser($this->Configuration, $this->Database, $this->CommandService,
-			$this->CrewService, $this->IpService, $this->IrcService, $this->PlayerService, $this->WelcomeMessageService);
+			$this->CrewService, $this->IrcService, $this->PlayerService, $this->WelcomeMessageService);
 
 		// Ping the database connection every 30 seconds. Reconnect if needed.
 		$this->databasePingTimerId = Timer::create(
@@ -299,6 +299,17 @@ class LVPEchoHandler extends ModuleBase {
 	}
 
 	/**
+	 * This method will make sure all internal state is as up-to-date as possible when the
+	 * bot starts up. Think of stuff like the current players ingame as well as checking
+	 * whether the state we have stored in the persistence files is still correct.
+	 */
+	private function syncGlobalState() {
+		$this->CrewService->syncPlayers();
+		$this->PlayerService->syncPlayers();
+		$this->CrewService->handleUpdateCrew();
+	}
+
+	/**
 	 * The onChannelJoin callback will check if this bot has just joined a specific LVP
 	 * channel. If so, we will execute some specific commands to make sure the handler is up
 	 * to date.
@@ -317,8 +328,7 @@ class LVPEchoHandler extends ModuleBase {
 		}
 
 		if (strtolower($channel) == LVP::CREW_CHANNEL) {
-			// TODO Nice hardcoding of our own command name there mate. Do this properly.
-			$this->CommandService->handle($bot, $channel, $nickname, '!updatecrew');
+			$this->syncGlobalState();
 		}
 
 		if (strtolower($channel) == LVP::RADIO_CHANNEL) {
@@ -406,13 +416,5 @@ class LVPEchoHandler extends ModuleBase {
 			// Let the RadioHandler check the names
 			$this->RadioService->handleNamesChecking(explode(' ', $names));
 		}
-	}
-
-	/**
-	 * This method is called every time the main loop iterates, so we can use it
-	 * to check on any running asynchronous SQL queries.
-	 */
-	public function onTick() {
-		$this->Database->pollAsyncQuery();
 	}
 }
