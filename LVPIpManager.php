@@ -613,11 +613,11 @@ class LVPIpManager implements LVPCommandRegistrar {
 		
 		if ($nLevel < LVP::LEVEL_MANAGEMENT && ($nType == self::TYPE_NICKNAME || $nType == self::TYPE_IP)) {
 			if ($nType == self::TYPE_NICKNAME) {
-				$sTable = 'samp_address_hide_ip';
+				$sTable = 'lvp_website.samp_address_hide_ip';
 				$sField = 'ip_address';
 				
 			} else if ($nType == self::TYPE_IP) {
-				$sTable = 'samp_address_hide_nickname';
+				$sTable = 'lvp_website.samp_address_hide_nickname';
 				$sField = 'nickname';
 			}
 			
