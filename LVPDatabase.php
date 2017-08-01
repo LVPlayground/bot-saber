@@ -58,7 +58,7 @@ class LVPDatabase {
 	public function prepare($statement) {
 		$prepared = $this->connection->prepare($statement);
 		if (!is_object($prepared)) {
-			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Preparing statement failed: ' . $this->error);
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Preparing statement failed: ' . $this->connection->error);
 			
 			return false;
 		}
@@ -80,8 +80,10 @@ class LVPDatabase {
 		$unwanted = ob_get_clean();
 		
 		if (!$result) {
-			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Executing query failed: ' . $this->error);
-			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, $unwanted);
+			$this->IrcService->error(null, LVP::DEBUG_CHANNEL, 'Executing query failed: ' . $this->connection->error);
+			if ($unwanted) {
+				$this->IrcService->error(null, LVP::DEBUG_CHANNEL, $unwanted);
+			}
 		}
 		
 		return $result;
